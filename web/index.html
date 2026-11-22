@@ -76,9 +76,12 @@ a.btn{color:inherit;text-decoration:none;background:var(--surface-1);border:1px 
 a.btn:hover{background:var(--hover)}
 button.primary{background:var(--series-1);border-color:var(--series-1);color:#fff}
 button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
-.local{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);margin:-4px 0 14px}
-.local svg{flex:none;color:var(--good)}
-@media (max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+.local{display:flex;align-items:flex-start;gap:7px;font-size:13px;color:var(--text-secondary);margin:-4px 0 14px}
+.local svg{flex:none;color:var(--good);margin-top:2px}
+@media (max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}
+  /* narrow: title + buttons on the first row, date/account controls on their own row below */
+  #rangeCtl{order:3;flex-basis:100%}}
+@media (max-width:480px){.wide{display:none}}
 </style>
 </head>
 <body class="viz-root">
@@ -91,7 +94,7 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
       <select id="acct"></select>
     </span>
     <span class="spacer"></span>
-    <button class="addBtn" type="button">＋ Add statement</button>
+    <button class="addBtn" type="button">＋ Add<span class="wide"> statement</span></button>
     <button id="filesBtn" type="button">Files &amp; backup</button>
   </div>
   <input id="file" type="file" accept=".csv,text/csv" multiple hidden>
@@ -349,19 +352,24 @@ function drawTable(txs){
 const tip = $("#tip");
 function showTip(e, html){ tip.innerHTML = html; tip.style.display = "block";
   const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
-$("#trend svg").addEventListener("mousemove", e => { const h = e.target.closest(".hit"); if (!h) return tip.style.display = "none";
-  showTip(e, `${monthLabel(h.dataset.m)}<br><b>${fmt2(+h.dataset.v)}</b>`); });
-$("#trend svg").addEventListener("mouseleave", () => tip.style.display = "none");
-$("#trend svg").addEventListener("click", e => { const h = e.target.closest(".hit"); if (!h) return;
+const hideTip = () => tip.style.display = "none";
+// Hover tooltips are for mice only: a tap on a phone fires an emulated mousemove but never a
+// mouseleave, which left the tooltip stuck on screen.
+const hover = fn => e => { if (e.pointerType === "mouse") fn(e); else hideTip(); };
+addEventListener("scroll", hideTip, {passive: true});
+$("#trend svg").addEventListener("pointermove", hover(e => { const h = e.target.closest(".hit"); if (!h) return tip.style.display = "none";
+  showTip(e, `${monthLabel(h.dataset.m)}<br><b>${fmt2(+h.dataset.v)}</b>`); }));
+$("#trend svg").addEventListener("pointerleave", hideTip);
+$("#trend svg").addEventListener("click", e => { const h = e.target.closest(".hit"); if (!h) return; hideTip();
   S.month = S.month === h.dataset.m ? null : h.dataset.m; S.limit = 200; render(); });
-$("#brk").addEventListener("mousemove", e => { const r = e.target.closest(".row"); if (!r) return tip.style.display = "none";
+$("#brk").addEventListener("pointermove", hover(e => { const r = e.target.closest(".row"); if (!r) return tip.style.display = "none";
   const info = !S.cat ? catInfo(r.dataset.n) : "";
   showTip(e, `${esc(r.dataset.n)}<br><b>${fmt2(+r.dataset.v)}</b> · ${r.dataset.c} transactions`
-    + (info ? `<div style="color:var(--text-secondary);margin-top:4px">${esc(info)}</div>` : "")); });
-$("#brk").addEventListener("mouseleave", () => tip.style.display = "none");
+    + (info ? `<div style="color:var(--text-secondary);margin-top:4px">${esc(info)}</div>` : "")); }));
+$("#brk").addEventListener("pointerleave", hideTip);
 $("#brk").addEventListener("click", e => { if (e.target.closest("select,input")) return;
   const r = e.target.closest(".row"); if (!r || r.classList.contains("nodrill")) return;
-  tip.style.display = "none";
+  hideTip();
   if (!S.cat) S.cat = r.dataset.n; else S.merchant = r.dataset.n; S.limit = 200; render(); });
 $("#brk").addEventListener("change", e => {
   const sel = e.target.closest("select[data-mcat]"); if (!sel) return;
