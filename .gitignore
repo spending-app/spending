@@ -1,0 +1,12 @@
+# Allowlist: only the app's own files can be committed, so statements, backups and
+# databases (whatever their name or format) can't slip in by accident.
+*
+!*/
+!.gitignore
+!README.md
+!CLAUDE.md
+!.github/workflows/*.yml
+!web/*.html
+!web/*.js
+!web/demo/*.csv
+.DS_Store

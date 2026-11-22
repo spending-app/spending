@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Spending</title>
+<style>
+.viz-root{
+  color-scheme:light;
+  --surface-0:#f4f4f2; --surface-1:#fcfcfb; --border:#e3e2de;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7974;
+  --grid:#ecebe7; --series-1:#2a78d6; --series-1-dim:#b7d3f6; --hover:#f0f4fb;
+  --good:#008300; --bad:#c0392b;
+}
+@media (prefers-color-scheme:dark){
+  .viz-root{
+    color-scheme:dark;
+    --surface-0:#121211; --surface-1:#1a1a19; --border:#2e2e2c;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8e88;
+    --grid:#2a2a28; --series-1:#3987e5; --series-1-dim:#1c3a5e; --hover:#22262d;
+    --good:#0ca30c; --bad:#e66767;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--surface-0);color:var(--text-primary)}
+.wrap{max-width:1200px;margin:0 auto;padding:16px 20px 40px}
+h1{font-size:18px;margin:0 16px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+select,input,button{font:inherit;color:inherit;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+button{cursor:pointer} button:hover{background:var(--hover)}
+button.on{border-color:var(--series-1);color:var(--series-1)}
+.spacer{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi .l{color:var(--text-secondary);font-size:12px} .kpi .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.crumbs{font-size:15px;margin:4px 0 10px} .crumbs a{color:var(--series-1);cursor:pointer;text-decoration:none} .crumbs a:hover{text-decoration:underline}
+.crumbs .sep{color:var(--text-muted);margin:0 6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.card h2{font-size:13px;font-weight:600;margin:0 0 10px;color:var(--text-secondary)}
+.hint{font-weight:400;color:var(--text-muted)}
+#trend svg{display:block;width:100%;height:220px}
+.brk{max-height:330px;overflow:auto}
+.row{display:grid;grid-template-columns:150px 1fr 90px 44px;gap:8px;align-items:center;padding:4px 6px;border-radius:6px;cursor:pointer}
+.row:hover{background:var(--hover)}
+.row .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .track{height:14px;position:relative}
+.row .fill{position:absolute;left:0;top:0;bottom:0;background:var(--series-1);border-radius:0 4px 4px 0;min-width:2px}
+.row .amt{text-align:right;font-variant-numeric:tabular-nums}
+.row .pct{text-align:right;color:var(--text-muted);font-size:12px}
+.row.catpick{grid-template-columns:120px 1fr 70px 36px 150px}
+.row.catpick select,.row.catpick input{font-size:12px;padding:2px 4px;max-width:150px;cursor:auto}
+.row.nodrill{cursor:default}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;padding:6px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+td{padding:5px 6px;border-bottom:1px solid var(--grid);vertical-align:middle}
+td.num,th.num{text-align:right}
+td.desc{color:var(--text-muted);font-size:12px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td select{padding:2px 4px;font-size:13px;max-width:160px}
+.pos{color:var(--good)}
+.tablebar{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.tablebar label{color:var(--text-secondary);font-size:13px}
+#tip{position:fixed;pointer-events:none;max-width:280px;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);display:none;z-index:9}
+#tip b{font-variant-numeric:tabular-nums}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text-primary);color:var(--surface-1);padding:8px 14px;border-radius:8px;display:none;max-width:80vw;white-space:pre-line}
+#drop{position:fixed;inset:0;background:rgba(42,120,214,.15);border:3px dashed var(--series-1);display:none;align-items:center;justify-content:center;font-size:22px;z-index:8}
+.empty{color:var(--text-muted);padding:30px;text-align:center}
+[hidden]{display:none!important}
+.banner{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:14px}
+.banner.warn{border-color:var(--bad)}
+.banner a{color:var(--series-1)}
+.welcome{max-width:640px;margin:40px auto;padding:24px 28px}
+.welcome h1{font-size:22px;margin-bottom:10px}
+.welcome ol{padding-left:20px;line-height:1.6}
+a.btn{color:inherit;text-decoration:none;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+a.btn:hover{background:var(--hover)}
+button.primary{background:var(--series-1);border-color:var(--series-1);color:#fff}
+button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
+.foot{text-align:center;margin-top:16px}
+@media (max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="viz-root">
+<div class="wrap">
+  <div class="bar">
+    <h1>Spending</h1>
+    <span id="rangeCtl" class="bar" style="margin:0">
+      <select id="from" title="From month"></select><span>→</span><select id="to" title="To month"></select>
+      <button data-q="12">Last 12 mo</button><button data-q="ytd">This year</button><button data-q="all">All</button>
+      <select id="acct"></select>
+    </span>
+    <span class="spacer"></span>
+    <button class="addBtn" type="button">＋ Add statement</button>
+    <button id="filesBtn" type="button">Files &amp; backup</button>
+  </div>
+  <input id="file" type="file" accept=".csv,text/csv" multiple hidden>
+  <input id="backupFile" type="file" accept=".json,application/json" hidden>
+
+  <div class="banner" id="demoBar" hidden>You're looking at <b>sample data</b>, kept separate from your own. <a href="./">Back to your data</a></div>
+  <div class="banner warn" id="noStore" hidden>This browser isn't letting the page save (a private window?). Anything you add disappears when you close the tab.</div>
+
+  <div class="card" id="filesPanel" hidden style="margin-bottom:14px">
+    <h2>Statement files <span class="hint">· removing a file removes its transactions too</span></h2>
+    <div id="filesList" class="brk"></div>
+    <div class="tablebar" style="margin:12px 0 0">
+      <button id="backupBtn" type="button">Download backup</button>
+      <button class="restoreBtn" type="button">Restore backup…</button>
+      <span class="hint">Your statements and category choices live only in this browser. Keep a backup: clearing browser data erases them.</span>
+    </div>
+  </div>
+
+  <div class="card welcome" id="welcome" hidden>
+    <h1>See where your money goes</h1>
+    <ol>
+      <li>On your bank's or card's website, open your account activity and download it as a <b>CSV</b> file (look for "Download" or "Export").</li>
+      <li>Drop the files on this page, or click <b>Add statement</b>. Add as many accounts as you like.</li>
+    </ol>
+    <p class="hint">Everything happens inside this browser on this computer. Your statements are never uploaded anywhere.</p>
+    <div class="tablebar">
+      <button class="addBtn primary" type="button">＋ Add statement</button>
+      <a class="btn" id="sampleLink" href="?demo">Try it with sample data</a>
+      <button class="restoreBtn" type="button">Restore a backup…</button>
+    </div>
+  </div>
+
+  <div id="dash">
+  <div class="kpis">
+    <div class="card kpi"><div class="l" id="kSpentL">Spent</div><div class="v" id="kSpent">–</div></div>
+    <div class="card kpi"><div class="l">Avg per month</div><div class="v" id="kAvg">–</div></div>
+    <div class="card kpi"><div class="l" id="kIncL">Income</div><div class="v" id="kInc">–</div></div>
+    <div class="card kpi"><div class="l" id="kNetL">Net (income − spent)</div><div class="v" id="kNet">–</div></div>
+  </div>
+
+  <div class="crumbs" id="crumbs"></div>
+
+  <div class="grid2">
+    <div class="card" id="trend"><h2>By month <span class="hint">· click a bar to focus that month</span></h2><svg role="img" aria-label="Monthly spending"></svg></div>
+    <div class="card"><h2 id="brkTitle">By category <span class="hint">· click to drill in</span></h2><div class="brk" id="brk"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="tablebar">
+      <h2 style="margin:0">Transactions <span class="hint" id="txCount"></span></h2>
+      <span class="spacer"></span>
+      <input id="search" placeholder="Search…" size="18">
+      <label><input type="checkbox" id="scopeAll" checked> Category change applies to all from that merchant</label>
+    </div>
+    <div style="overflow:auto"><table id="tx"><thead><tr>
+      <th data-k="date">Date</th><th data-k="merchant">Merchant</th><th data-k="description">Description</th>
+      <th data-k="account">Account</th><th data-k="category">Category</th><th data-k="amount" class="num">Amount</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div style="text-align:center;margin-top:8px"><button id="more" hidden>Show more</button></div>
+  </div>
+  <p class="hint foot">Your data stays in this browser; nothing is uploaded. Download a backup from <b>Files &amp; backup</b> now and then.</p>
+  </div>
+</div>
+<div id="tip"></div><div id="toast"></div><div id="drop">Drop statements to import</div>
+
+<script src="default-rules.js"></script>
+<script src="engine.js"></script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const fmt = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmt2 = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const monthLabel = m => { const [y,mo] = m.split("-"); return new Date(+y, +mo-1, 1).toLocaleString(undefined,{month:"short",year:"2-digit"}); };
+
+let DATA = {transactions:[], categories:[], exclude:[], category_info:{}};
+const catInfo = c => Object.prototype.hasOwnProperty.call(DATA.category_info, c) ? DATA.category_info[c] : "";
+function catOptions(current){
+  const cats = DATA.categories.includes(current) ? DATA.categories : [current, ...DATA.categories];
+  return cats.map(c => `<option title="${esc(catInfo(c))}"${c === current ? " selected" : ""}>${esc(c)}</option>`).join("")
+    + `<option value="__new">+ New category…</option>`;
+}
+const S = {from:null, to:null, acct:"", cat:null, merchant:null, month:null, q:"", sort:"date", dir:-1, limit:200};
+
+// ---------- storage: statement files + the user's category choices, kept in this browser (IndexedDB)
+const PROFILE = new URLSearchParams(location.search).has("demo") ? "demo" : "main";  // sample data never mixes with yours
+const SAMPLES = ["chase_card.csv", "checking.csv", "apple_card.csv", "discover_card.csv", "amex_card.csv"];
+let FILES = [];  // [{name, text, added}]
+let USER = {merchant_overrides: {}, transaction_overrides: {}};
+
+const Store = {
+  db: null, mem: {},
+  async open(){
+    try {
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open("spending-" + PROFILE, 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("kv");
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+    } catch { this.db = null; }  // private windows / file:// in some browsers: fall back to memory
+  },
+  get(k){
+    if (!this.db) return Promise.resolve(this.mem[k]);
+    return new Promise((res, rej) => { const q = this.db.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  },
+  set(k, v){
+    if (!this.db){ this.mem[k] = v; return Promise.resolve(); }
+    return new Promise((res, rej) => { const t = this.db.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); });
+  },
+};
+async function persist(){ await Store.set("files", FILES); await Store.set("user", USER); }
+const strMap = o => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).filter(([, v]) => typeof v === "string"));
+
+function load(){
+  DATA = Engine.compute(FILES, Engine.buildRules(DEFAULT_RULES, USER));
+  const empty = !FILES.length;
+  $("#welcome").hidden = !empty; $("#dash").hidden = empty; $("#rangeCtl").hidden = empty;
+  const months = allMonths();
+  const fill = sel => sel.innerHTML = months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join("");
+  fill($("#from")); fill($("#to"));
+  if (!S.from || !months.includes(S.from)) quick("12", false);
+  $("#from").value = S.from; $("#to").value = S.to;
+  const accts = [...new Set(DATA.transactions.map(t => t.account))].sort();
+  $("#acct").innerHTML = `<option value="">All accounts</option>` + accts.map(a => `<option>${esc(a)}</option>`).join("");
+  $("#acct").value = S.acct;
+  render();
+}
+
+function allMonths(){
+  const ms = DATA.transactions.map(t => t.date.slice(0,7)).sort();
+  if (!ms.length) return [];
+  const out = []; let [y,m] = ms[0].split("-").map(Number); const last = ms[ms.length-1];
+  while (true){ const k = `${y}-${String(m).padStart(2,"0")}`; out.push(k); if (k >= last) break; if (++m > 12){m=1;y++;} }
+  return out;
+}
+
+function quick(q, rerender=true){
+  const ms = allMonths(); if (!ms.length) return;
+  S.to = ms[ms.length-1];
+  if (q === "all") S.from = ms[0];
+  else if (q === "ytd") S.from = ms.find(m => m.startsWith(S.to.slice(0,4))) || ms[0];
+  else S.from = ms[Math.max(0, ms.length-12)];
+  S.month = null;
+  document.querySelectorAll("[data-q]").forEach(b => b.classList.toggle("on", b.dataset.q === q));
+  if (rerender){ $("#from").value = S.from; $("#to").value = S.to; render(); }
+}
+
+const isSpend = t => !DATA.exclude.includes(t.category);
+const spendOf = t => -t.amount;                 // refunds come in positive and reduce spend
+
+function inRange(t){ const m = t.date.slice(0,7); return m >= S.from && m <= S.to && (!S.acct || t.account === S.acct); }
+
+function render(){
+  const range = DATA.transactions.filter(inRange);
+  const focus = range.filter(t => (!S.cat || t.category === S.cat) && (!S.merchant || t.merchant === S.merchant));
+  const focusM = focus.filter(t => !S.month || t.date.startsWith(S.month));
+  const months = allMonths().filter(m => m >= S.from && m <= S.to);
+
+  // KPIs follow the drill + month focus
+  const spent = focusM.filter(isSpend).reduce((a,t) => a + spendOf(t), 0);
+  const periodAll = range.filter(t => !S.month || t.date.startsWith(S.month));
+  const nMonths = S.month ? 1 : Math.max(1, months.length);
+  $("#kSpent").textContent = fmt(spent);
+  $("#kSpentL").textContent = "Spent" + (S.month ? " in " + monthLabel(S.month) : "");
+  $("#kAvg").textContent = fmt(spent / nMonths);
+  if (S.cat){  // drilled in: income/net are meaningless, show share + count instead
+    const all = periodAll.filter(isSpend).reduce((a,t) => a + spendOf(t), 0);
+    $("#kIncL").textContent = "Share of all spending"; $("#kInc").textContent = all ? Math.round(spent/all*100) + "%" : "–";
+    $("#kNetL").textContent = "Transactions"; $("#kNet").textContent = focusM.filter(isSpend).length.toLocaleString();
+    $("#kNet").style.color = "";
+  } else {
+    const income = periodAll.filter(t => t.category === "Income").reduce((a,t) => a + t.amount, 0);
+    $("#kIncL").textContent = "Income"; $("#kInc").textContent = fmt(income);
+    $("#kNetL").textContent = "Net (income − spent)"; $("#kNet").textContent = fmt(income - spent);
+    $("#kNet").style.color = (income - spent) >= 0 ? "var(--good)" : "var(--bad)";
+  }
+
+  // breadcrumb
+  const c = [`<a data-c="root">All spending</a>`];
+  if (S.cat) c.push(`<a data-c="cat" title="${esc(catInfo(S.cat))}">${esc(S.cat)}</a>`);
+  if (S.merchant) c.push(`<a data-c="merchant">${esc(S.merchant)}</a>`);
+  if (S.month) c.push(`<a data-c="month" title="Click to clear month">${monthLabel(S.month)} ✕</a>`);
+  $("#crumbs").innerHTML = c.join(`<span class="sep">›</span>`);
+
+  drawTrend(months, focus.filter(isSpend));
+  drawBreakdown(focusM);
+  drawTable(focusM);
+}
+
+function drawTrend(months, txs){
+  const svg = $("#trend svg"); const W = svg.clientWidth || 520, H = 220, pl = 52, pr = 8, pt = 12, pb = 26;
+  const by = Object.fromEntries(months.map(m => [m,0]));
+  txs.forEach(t => { const m = t.date.slice(0,7); if (m in by) by[m] += spendOf(t); });
+  const vals = months.map(m => Math.max(0, by[m]));
+  const max = niceMax(Math.max(1, ...vals));
+  const iw = W - pl - pr, ih = H - pt - pb, step = iw / Math.max(1, months.length);
+  const bw = Math.max(3, Math.min(40, step - 2*Math.max(2, step*0.15)));
+  const y = v => pt + ih - (v / max) * ih;
+  let s = "";
+  for (let i = 0; i <= 4; i++){ const v = max*i/4, yy = y(v);
+    s += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/>`;
+    s += `<text x="${pl-6}" y="${yy+4}" text-anchor="end" font-size="11" fill="var(--text-muted)">${fmtShort(v)}</text>`; }
+  const every = Math.ceil(months.length / Math.max(1, Math.floor(iw/48)));
+  months.forEach((m,i) => {
+    const cx = pl + step*i + step/2, v = vals[i], top = y(v), h = pt + ih - top;
+    const dim = S.month && S.month !== m;
+    const r = Math.min(4, bw/2, h);
+    s += `<path d="M${cx-bw/2},${pt+ih} V${top+r} q0,-${r} ${r},-${r} H${cx+bw/2-r} q${r},0 ${r},${r} V${pt+ih} Z" fill="${dim ? "var(--series-1-dim)" : "var(--series-1)"}"/>`;
+    s += `<rect class="hit" data-m="${m}" data-v="${by[m]}" x="${pl+step*i}" y="${pt}" width="${step}" height="${ih}" fill="transparent" style="cursor:pointer"/>`;
+    if (i % every === 0) s += `<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--text-muted)">${monthLabel(m)}</text>`;
+  });
+  s += `<line x1="${pl}" x2="${W-pr}" y1="${pt+ih}" y2="${pt+ih}" stroke="var(--text-muted)"/>`;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = s;
+}
+function niceMax(v){ const p = Math.pow(10, Math.floor(Math.log10(v))); for (const k of [1,1.5,2,2.5,3,4,5,6,8,10]) if (k*p >= v) return k*p; return 10*p; }
+function fmtShort(v){ return v >= 1000 ? "$" + (v/1000).toFixed(v >= 10000 ? 0 : 1).replace(/\.0$/,"") + "k" : "$" + Math.round(v); }
+
+function drawBreakdown(txs){
+  const key = S.merchant ? null : (S.cat ? "merchant" : "category");
+  $("#brkTitle").innerHTML = key === "category" ? `By category <span class="hint">· click to drill in</span>`
+    : key === "merchant" ? `Merchants in ${esc(S.cat)} <span class="hint">· click to see transactions</span>`
+    : `${esc(S.merchant)} <span class="hint">· by account</span>`;
+  const k = key || "account";
+  const g = {};
+  txs.filter(isSpend).forEach(t => { const n = t[k]; (g[n] = g[n] || {v:0,n:0,cat:t.category}); g[n].v += spendOf(t); g[n].n++; });
+  const rows = Object.entries(g).sort((a,b) => b[1].v - a[1].v);
+  const total = rows.reduce((a,[,o]) => a + Math.max(0,o.v), 0);
+  const max = Math.max(1, ...rows.map(([,o]) => o.v));
+  if (!rows.length){ $("#brk").innerHTML = `<div class="empty">No spending here.</div>`; return; }
+  $("#brk").innerHTML = rows.map(([n,o]) => `
+    <div class="row ${key ? "" : "nodrill"}${key === "merchant" ? " catpick" : ""}" data-n="${esc(n)}" data-v="${o.v}" data-c="${o.n}">
+      <div class="n" title="${esc(n)}">${esc(n)}</div>
+      <div class="track"><div class="fill" style="width:${Math.max(0,o.v)/max*100}%"></div></div>
+      <div class="amt">${fmt(o.v)}</div><div class="pct">${total ? Math.round(Math.max(0,o.v)/total*100) : 0}%</div>
+      ${key === "merchant" ? `<select data-mcat="${esc(n)}" title="Recategorize every transaction from this merchant">${catOptions(o.cat)}</select>` : ""}
+    </div>`).join("");
+}
+
+function drawTable(txs){
+  const q = S.q.toLowerCase();
+  let rows = txs.filter(t => !q || (t.description + " " + t.merchant + " " + t.category).toLowerCase().includes(q));
+  rows.sort((a,b) => { const x = a[S.sort], y = b[S.sort]; return (x < y ? -1 : x > y ? 1 : 0) * S.dir; });
+  $("#txCount").textContent = `· ${rows.length.toLocaleString()}`;
+  $("#tx tbody").innerHTML = rows.slice(0, S.limit).map(t => `
+    <tr><td>${t.date}</td><td>${esc(t.merchant)}</td><td class="desc" title="${esc(t.description)}">${esc(t.description)}</td>
+    <td>${esc(t.account)}</td>
+    <td><select data-id="${t.id}" title="${esc(catInfo(t.category))}">${catOptions(t.category)}</select></td>
+    <td class="num ${t.amount > 0 ? "pos" : ""}">${t.amount > 0 ? "+" : ""}${fmt2(t.amount)}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="empty">No transactions. Add a statement (CSV) or drop files on the page.</td></tr>`;
+  $("#more").hidden = rows.length <= S.limit;
+  document.querySelectorAll("#tx th").forEach(th => th.textContent = th.textContent.replace(/ [▲▼]$/,"") + (th.dataset.k === S.sort ? (S.dir > 0 ? " ▲" : " ▼") : ""));
+}
+
+// ---------- interaction
+const tip = $("#tip");
+function showTip(e, html){ tip.innerHTML = html; tip.style.display = "block";
+  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+$("#trend svg").addEventListener("mousemove", e => { const h = e.target.closest(".hit"); if (!h) return tip.style.display = "none";
+  showTip(e, `${monthLabel(h.dataset.m)}<br><b>${fmt2(+h.dataset.v)}</b>`); });
+$("#trend svg").addEventListener("mouseleave", () => tip.style.display = "none");
+$("#trend svg").addEventListener("click", e => { const h = e.target.closest(".hit"); if (!h) return;
+  S.month = S.month === h.dataset.m ? null : h.dataset.m; S.limit = 200; render(); });
+$("#brk").addEventListener("mousemove", e => { const r = e.target.closest(".row"); if (!r) return tip.style.display = "none";
+  const info = !S.cat ? catInfo(r.dataset.n) : "";
+  showTip(e, `${esc(r.dataset.n)}<br><b>${fmt2(+r.dataset.v)}</b> · ${r.dataset.c} transactions`
+    + (info ? `<div style="color:var(--text-secondary);margin-top:4px">${esc(info)}</div>` : "")); });
+$("#brk").addEventListener("mouseleave", () => tip.style.display = "none");
+$("#brk").addEventListener("click", e => { if (e.target.closest("select,input")) return;
+  const r = e.target.closest(".row"); if (!r || r.classList.contains("nodrill")) return;
+  tip.style.display = "none";
+  if (!S.cat) S.cat = r.dataset.n; else S.merchant = r.dataset.n; S.limit = 200; render(); });
+$("#brk").addEventListener("change", e => {
+  const sel = e.target.closest("select[data-mcat]"); if (!sel) return;
+  const merchant = sel.dataset.mcat, cat = sel.value;
+  if (cat === "__new"){
+    const inp = document.createElement("input"); inp.placeholder = "New category, Enter"; inp.size = 14;
+    sel.replaceWith(inp); inp.focus();
+    inp.onkeydown = ev => { if (ev.key === "Enter" && inp.value.trim()) saveMerchant(merchant, inp.value.trim()); if (ev.key === "Escape") render(); };
+    inp.onblur = () => setTimeout(render, 150);
+    return;
+  }
+  saveMerchant(merchant, cat);
+});
+function recategorize(id, category, scope){
+  const t = DATA.transactions.find(x => x.id === id);
+  if (!t) return null;
+  if (scope === "merchant"){  // a saved rule: applies to this merchant's future statements too
+    USER.merchant_overrides[t.merchant] = category;
+    delete USER.transaction_overrides[id];
+  } else USER.transaction_overrides[id] = category;  // just this one (ids are stable across re-imports)
+  return t;
+}
+async function saveMerchant(merchant, category){
+  const t = DATA.transactions.find(x => x.merchant === merchant);
+  if (!t) return;
+  recategorize(t.id, category, "merchant");
+  await persist();
+  toast(`All "${merchant}" → ${category} (saved as a rule)`);
+  load();
+}
+$("#crumbs").addEventListener("click", e => { const a = e.target.closest("a"); if (!a) return;
+  const c = a.dataset.c;
+  if (c === "root"){ S.cat = S.merchant = null; } else if (c === "cat"){ S.merchant = null; } else if (c === "month"){ S.month = null; }
+  render(); });
+$("#from").onchange = e => { S.from = e.target.value; if (S.to < S.from) S.to = S.from, $("#to").value = S.to; S.month = null; clearQ(); render(); };
+$("#to").onchange = e => { S.to = e.target.value; if (S.from > S.to) S.from = S.to, $("#from").value = S.from; S.month = null; clearQ(); render(); };
+function clearQ(){ document.querySelectorAll("[data-q]").forEach(b => b.classList.remove("on")); }
+document.querySelectorAll("[data-q]").forEach(b => b.onclick = () => quick(b.dataset.q));
+$("#acct").onchange = e => { S.acct = e.target.value; render(); };
+$("#search").oninput = e => { S.q = e.target.value; drawTable(currentFocus()); };
+$("#more").onclick = () => { S.limit += 500; drawTable(currentFocus()); };
+document.querySelectorAll("#tx th").forEach(th => th.onclick = () => {
+  S.dir = S.sort === th.dataset.k ? -S.dir : (th.dataset.k === "date" || th.dataset.k === "amount" ? -1 : 1);
+  if (th.dataset.k === "amount" && S.sort !== "amount") S.dir = 1; // biggest spend first
+  S.sort = th.dataset.k; drawTable(currentFocus()); });
+function currentFocus(){ return DATA.transactions.filter(inRange).filter(t => (!S.cat || t.category === S.cat) && (!S.merchant || t.merchant === S.merchant) && (!S.month || t.date.startsWith(S.month))); }
+
+$("#tx").addEventListener("change", async e => {
+  const sel = e.target.closest("select[data-id]"); if (!sel) return;
+  let cat = sel.value;
+  if (cat === "__new"){
+    // inline input instead of a prompt() dialog
+    const inp = document.createElement("input"); inp.placeholder = "New category, Enter"; inp.size = 16;
+    sel.replaceWith(inp); inp.focus();
+    inp.onkeydown = ev => { if (ev.key === "Enter" && inp.value.trim()) save(sel.dataset.id, inp.value.trim()); if (ev.key === "Escape") render(); };
+    inp.onblur = () => setTimeout(render, 150);
+    return;
+  }
+  save(sel.dataset.id, cat);
+});
+async function save(id, category){
+  const scope = $("#scopeAll").checked ? "merchant" : "one";
+  const t = recategorize(id, category, scope);
+  if (!t) return;
+  await persist();
+  toast(scope === "merchant" ? `All “${t.merchant}” → ${category} (saved as a rule)` : `Changed to ${category}`);
+  load();
+}
+
+let toastT;
+function toast(msg){ const el = $("#toast"); el.textContent = msg; el.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => el.style.display = "none", 3500); }
+document.querySelectorAll(".addBtn").forEach(b => b.onclick = () => $("#file").click());
+$("#file").onchange = e => { const fs = [...e.target.files]; e.target.value = ""; upload(fs); };
+async function upload(list){
+  const msgs = [], before = new Set(DATA.transactions.map(t => t.id)), added = [];
+  for (const f of list){
+    if (!/\.csv$/i.test(f.name)){ msgs.push(`⚠ ${f.name}: only CSV files work. Download the statement as CSV instead.`); continue; }
+    const text = await f.text();
+    try { Engine.readCSV(text); } catch (e){ msgs.push(`⚠ ${f.name}: ${e.message}`); continue; }
+    FILES = FILES.filter(x => x.name !== f.name).concat({name: f.name, text, added: Date.now()});  // same name replaces
+    added.push(f.name);
+  }
+  if (added.length){
+    await persist(); load();
+    for (const name of added){
+      const n = DATA.transactions.filter(t => t.source === name && !before.has(t.id)).length;
+      msgs.push(`${name}: ${DATA.perFile[name]} transactions, ${n} new`);
+    }
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();  // ask the browser not to evict our data
+    if (!$("#filesPanel").hidden) renderFiles();
+  }
+  if (msgs.length) toast(msgs.join("\n"));
+}
+function renderFiles(){
+  const names = FILES.map(f => f.name).sort();
+  $("#filesList").innerHTML = names.length ? names.map(f => `
+    <div class="row nodrill"><span class="n" title="${esc(f)}">${esc(f)}</span>
+    <span></span><span class="pct">${esc(String(DATA.perFile[f] ?? 0))} tx</span>
+    <button data-rm="${esc(f)}" title="Remove this file and its transactions">✕</button></div>`).join("")
+    : `<div class="empty">No statement files yet.</div>`;
+}
+$("#filesBtn").onclick = () => { const p = $("#filesPanel"); p.hidden = !p.hidden; if (!p.hidden) renderFiles(); };
+$("#filesList").onclick = async e => {
+  const f = e.target.dataset.rm;
+  if (!f || !confirm(`Remove "${f}" and its transactions?`)) return;
+  FILES = FILES.filter(x => x.name !== f);
+  await persist(); toast(`Removed ${f}`); load(); renderFiles();
+};
+
+$("#backupBtn").onclick = () => {
+  const backup = {app: "spending", version: 1, exported: new Date().toISOString(), files: FILES, ...USER};
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(backup)], {type: "application/json"}));
+  a.download = `spending-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+document.querySelectorAll(".restoreBtn").forEach(b => b.onclick = () => $("#backupFile").click());
+$("#backupFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  let j; try { j = JSON.parse(await f.text()); } catch { return toast(`⚠ ${f.name} isn't a backup file.`); }
+  const mo = strMap(j && j.merchant_overrides), to = strMap(j && j.transaction_overrides);
+  if (j && Array.isArray(j.files)){  // full backup from this page
+    if (FILES.length && !confirm(`Replace everything here with the backup "${f.name}"?`)) return;
+    FILES = j.files.filter(x => x && typeof x.name === "string" && typeof x.text === "string");
+    USER = {merchant_overrides: mo, transaction_overrides: to};
+    toast(`Restored ${FILES.length} statement files.`);
+  } else if (j && (j.merchant_overrides || j.transaction_overrides)){  // rules.json from the command-line version
+    Object.assign(USER.merchant_overrides, mo); Object.assign(USER.transaction_overrides, to);
+    const m = Object.keys(mo).length, o = Object.keys(to).length;
+    toast(`Imported ${m} merchant choice${m === 1 ? "" : "s"} and ${o} one-off categor${o === 1 ? "y" : "ies"}.`);
+  } else return toast(`⚠ ${f.name} isn't a backup file.`);
+  await persist(); load(); if (!$("#filesPanel").hidden) renderFiles();
+};
+
+async function loadSamples(){
+  try {
+    FILES = await Promise.all(SAMPLES.map(async name => {
+      const r = await fetch("demo/" + name); if (!r.ok) throw new Error(name);
+      return {name, text: await r.text(), added: Date.now()};
+    }));
+    await persist();
+  } catch { toast("Couldn't load the sample files."); }
+}
+let dragN = 0;
+addEventListener("dragenter", e => { e.preventDefault(); dragN++; $("#drop").style.display = "flex"; });
+addEventListener("dragleave", () => { if (--dragN <= 0) $("#drop").style.display = "none"; });
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("drop", e => { e.preventDefault(); dragN = 0; $("#drop").style.display = "none"; upload([...e.dataTransfer.files]); });
+addEventListener("resize", () => render());
+
+(async () => {
+  await Store.open();
+  $("#noStore").hidden = !!Store.db;
+  $("#demoBar").hidden = PROFILE !== "demo";
+  $("#sampleLink").hidden = PROFILE === "demo";
+  if (PROFILE === "demo") document.title = "Spending (sample data)";
+  try {
+    FILES = (await Store.get("files")) || [];
+    const u = await Store.get("user");
+    if (u) USER = {merchant_overrides: strMap(u.merchant_overrides), transaction_overrides: strMap(u.transaction_overrides)};
+  } catch { toast("Couldn't read saved data from this browser."); }
+  if (PROFILE === "demo" && !FILES.length) await loadSamples();
+  load();
+})();
+</script>
+</body>
+</html>
