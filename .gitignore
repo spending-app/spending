@@ -9,4 +9,5 @@
 !web/*.html
 !web/*.js
 !web/demo/*.csv
+!docs/*.png
 .DS_Store

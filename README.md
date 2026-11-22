@@ -3,8 +3,12 @@
 A spending dashboard that runs entirely in your web browser. There's nothing to install and no
 account to create, and your bank statements are never uploaded: everything stays on your computer.
 
+**Open it: https://spending-app.github.io/spending/**
+
+![The dashboard with sample data: monthly spending, spending by category, and the transaction list](docs/screenshot.png)
+
 ## Use it
-1. Open the app's page.
+1. Open **https://spending-app.github.io/spending/**.
 2. On your bank's or card's website, download your account activity as a **CSV** file.
 3. Drop the files onto the page (or click **Add statement**). Add as many accounts as you like.
 

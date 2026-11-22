@@ -76,7 +76,8 @@ a.btn{color:inherit;text-decoration:none;background:var(--surface-1);border:1px 
 a.btn:hover{background:var(--hover)}
 button.primary{background:var(--series-1);border-color:var(--series-1);color:#fff}
 button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
-.foot{text-align:center;margin-top:16px}
+.local{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);margin:-4px 0 14px}
+.local svg{flex:none;color:var(--good)}
 @media (max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -96,6 +97,8 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
   <input id="file" type="file" accept=".csv,text/csv" multiple hidden>
   <input id="backupFile" type="file" accept=".json,application/json" hidden>
 
+  <p class="local"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <span><b>Everything stays on this computer.</b> Your statements are read and saved in this browser only, never uploaded. Keep a copy now and then with <b>Files &amp; backup</b>.</span></p>
   <div class="banner" id="demoBar" hidden>You're looking at <b>sample data</b>, kept separate from your own. <a href="./">Back to your data</a></div>
   <div class="banner warn" id="noStore" hidden>This browser isn't letting the page save (a private window?). Anything you add disappears when you close the tab.</div>
 
@@ -115,7 +118,6 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
       <li>On your bank's or card's website, open your account activity and download it as a <b>CSV</b> file (look for "Download" or "Export").</li>
       <li>Drop the files on this page, or click <b>Add statement</b>. Add as many accounts as you like.</li>
     </ol>
-    <p class="hint">Everything happens inside this browser on this computer. Your statements are never uploaded anywhere.</p>
     <div class="tablebar">
       <button class="addBtn primary" type="button">＋ Add statement</button>
       <a class="btn" id="sampleLink" href="?demo">Try it with sample data</a>
@@ -151,7 +153,6 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
     </tr></thead><tbody></tbody></table></div>
     <div style="text-align:center;margin-top:8px"><button id="more" hidden>Show more</button></div>
   </div>
-  <p class="hint foot">Your data stays in this browser; nothing is uploaded. Download a backup from <b>Files &amp; backup</b> now and then.</p>
   </div>
 </div>
 <div id="tip"></div><div id="toast"></div><div id="drop">Drop statements to import</div>
