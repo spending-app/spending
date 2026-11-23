@@ -116,7 +116,9 @@ const DEFAULT_RULES = {
         "mobile payment",
         "internet payment",
         "payment - thank",
-        "card payment"
+        "card payment",
+        "online banking payment",
+        "payment to crd"
       ]
     },
     {

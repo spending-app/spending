@@ -10,4 +10,6 @@
 !web/*.js
 !web/demo/*.csv
 !docs/*.png
+!testdata/*.csv
+!testdata/README.md
 .DS_Store

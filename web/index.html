@@ -33,6 +33,7 @@ button.on{border-color:var(--series-1);color:var(--series-1)}
 .spacer{flex:1}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
 .card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi.click{cursor:pointer} .kpi.click:hover{background:var(--hover)}
 .kpi .l{color:var(--text-secondary);font-size:12px} .kpi .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
 .crumbs{font-size:15px;margin:4px 0 10px} .crumbs a{color:var(--series-1);cursor:pointer;text-decoration:none} .crumbs a:hover{text-decoration:underline}
 .crumbs .sep{color:var(--text-muted);margin:0 6px}
@@ -163,7 +164,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   <div class="kpis">
     <div class="card kpi"><div class="l" id="kSpentL">Spent</div><div class="v" id="kSpent">–</div></div>
     <div class="card kpi"><div class="l">Avg per month</div><div class="v" id="kAvg">–</div></div>
-    <div class="card kpi"><div class="l" id="kIncL">Income</div><div class="v" id="kInc">–</div></div>
+    <div class="card kpi" id="kIncCard"><div class="l" id="kIncL">Income</div><div class="v" id="kInc">–</div></div>
     <div class="card kpi"><div class="l" id="kNetL">Net (income − spent)</div><div class="v" id="kNet">–</div></div>
   </div>
 
@@ -312,6 +313,9 @@ function quick(q, rerender=true){
 
 const isSpend = t => !DATA.exclude.includes(t.category);
 const spendOf = t => -t.amount;                 // refunds come in positive and reduce spend
+// What the charts add up: spending normally, money coming in when drilled into Income.
+const flow = () => S.cat === "Income" ? {income: true, keep: t => t.category === "Income", val: t => t.amount}
+                                      : {income: false, keep: isSpend, val: spendOf};
 
 function inRange(t){ const m = t.date.slice(0,7); return m >= S.from && m <= S.to && (!S.acct || t.account === S.acct); }
 
@@ -322,32 +326,39 @@ function render(){
   const months = allMonths().filter(m => m >= S.from && m <= S.to);
 
   // KPIs follow the drill + month focus
-  const spent = focusM.filter(isSpend).reduce((a,t) => a + spendOf(t), 0);
+  const F = flow();
+  const spent = focusM.filter(F.keep).reduce((a,t) => a + F.val(t), 0);
   const periodAll = range.filter(t => !S.month || t.date.startsWith(S.month));
   const nMonths = S.month ? 1 : Math.max(1, months.length);
   $("#kSpent").textContent = fmt(spent);
-  $("#kSpentL").textContent = "Spent" + (S.month ? " in " + monthLabel(S.month) : "");
+  $("#kSpentL").textContent = (F.income ? "Income" : "Spent") + (S.month ? " in " + monthLabel(S.month) : "");
   $("#kAvg").textContent = fmt(spent / nMonths);
-  if (S.cat){  // drilled in: income/net are meaningless, show share + count instead
+  $("#kIncCard").classList.toggle("click", !S.cat);
+  $("#kIncCard").title = S.cat ? "" : "Click to see where your income comes from";
+  if (F.income){
+    $("#kIncL").textContent = "Sources"; $("#kInc").textContent = new Set(focusM.filter(F.keep).map(t => t.merchant)).size.toLocaleString();
+    $("#kNetL").textContent = "Transactions"; $("#kNet").textContent = focusM.filter(F.keep).length.toLocaleString();
+    $("#kNet").style.color = "";
+  } else if (S.cat){  // drilled in: income/net are meaningless, show share + count instead
     const all = periodAll.filter(isSpend).reduce((a,t) => a + spendOf(t), 0);
     $("#kIncL").textContent = "Share of all spending"; $("#kInc").textContent = all ? Math.round(spent/all*100) + "%" : "–";
     $("#kNetL").textContent = "Transactions"; $("#kNet").textContent = focusM.filter(isSpend).length.toLocaleString();
     $("#kNet").style.color = "";
   } else {
     const income = periodAll.filter(t => t.category === "Income").reduce((a,t) => a + t.amount, 0);
-    $("#kIncL").textContent = "Income"; $("#kInc").textContent = fmt(income);
+    $("#kIncL").textContent = "Income ›"; $("#kInc").textContent = fmt(income);
     $("#kNetL").textContent = "Net (income − spent)"; $("#kNet").textContent = fmt(income - spent);
     $("#kNet").style.color = (income - spent) >= 0 ? "var(--good)" : "var(--bad)";
   }
 
   // breadcrumb
-  const c = [`<a data-c="root">All spending</a>`];
+  const c = [`<a data-c="root">${F.income ? "Overview" : "All spending"}</a>`];
   if (S.cat) c.push(`<a data-c="cat" title="${esc(catInfo(S.cat))}">${esc(S.cat)}</a>`);
   if (S.merchant) c.push(`<a data-c="merchant">${esc(S.merchant)}</a>`);
   if (S.month) c.push(`<a data-c="month" title="Click to clear month">${monthLabel(S.month)} ✕</a>`);
   $("#crumbs").innerHTML = c.join(`<span class="sep">›</span>`);
 
-  drawTrend(months, focus.filter(isSpend));
+  drawTrend(months, focus.filter(F.keep), F.val);
   drawBreakdown(focusM);
   drawRecurring();
   drawTable(focusM);
@@ -376,10 +387,10 @@ function drawRecurring(){
   more.textContent = recurAll ? "Show fewer" : `Show all ${list.length}`;
 }
 
-function drawTrend(months, txs){
+function drawTrend(months, txs, val){
   const svg = $("#trend svg"); const W = svg.clientWidth || 520, H = 220, pl = 52, pr = 8, pt = 12, pb = 26;
   const by = Object.fromEntries(months.map(m => [m,0]));
-  txs.forEach(t => { const m = t.date.slice(0,7); if (m in by) by[m] += spendOf(t); });
+  txs.forEach(t => { const m = t.date.slice(0,7); if (m in by) by[m] += val(t); });
   const vals = months.map(m => Math.max(0, by[m]));
   const max = niceMax(Math.max(1, ...vals));
   const iw = W - pl - pr, ih = H - pt - pb, step = iw / Math.max(1, months.length);
@@ -405,17 +416,17 @@ function niceMax(v){ const p = Math.pow(10, Math.floor(Math.log10(v))); for (con
 function fmtShort(v){ return v >= 1000 ? "$" + (v/1000).toFixed(v >= 10000 ? 0 : 1).replace(/\.0$/,"") + "k" : "$" + Math.round(v); }
 
 function drawBreakdown(txs){
-  const key = S.merchant ? null : (S.cat ? "merchant" : "category");
+  const key = S.merchant ? null : (S.cat ? "merchant" : "category"), F = flow();
   $("#brkTitle").innerHTML = key === "category" ? `By category <span class="hint">· click to drill in</span>`
-    : key === "merchant" ? `Merchants in ${esc(S.cat)} <span class="hint">· click to see transactions</span>`
+    : key === "merchant" ? `${F.income ? "Income sources" : "Merchants in " + esc(S.cat)} <span class="hint">· click to see transactions</span>`
     : `${esc(S.merchant)} <span class="hint">· by account</span>`;
   const k = key || "account";
   const g = {};
-  txs.filter(isSpend).forEach(t => { const n = t[k]; (g[n] = g[n] || {v:0,n:0,cat:t.category}); g[n].v += spendOf(t); g[n].n++; });
+  txs.filter(F.keep).forEach(t => { const n = t[k]; (g[n] = g[n] || {v:0,n:0,cat:t.category}); g[n].v += F.val(t); g[n].n++; });
   const rows = Object.entries(g).sort((a,b) => b[1].v - a[1].v);
   const total = rows.reduce((a,[,o]) => a + Math.max(0,o.v), 0);
   const max = Math.max(1, ...rows.map(([,o]) => o.v));
-  if (!rows.length){ $("#brk").innerHTML = `<div class="empty">No spending here.</div>`; return; }
+  if (!rows.length){ $("#brk").innerHTML = `<div class="empty">No ${F.income ? "income" : "spending"} here.</div>`; return; }
   $("#brk").innerHTML = rows.map(([n,o]) => `
     <div class="row ${key ? "" : "nodrill"}${key === "merchant" ? " catpick" : ""}" data-n="${esc(n)}" data-v="${o.v}" data-c="${o.n}">
       <div class="n" title="${esc(n)}">${esc(n)}</div>
@@ -441,6 +452,7 @@ function drawTable(txs){
 }
 
 // ---------- interaction
+$("#kIncCard").onclick = () => { if (S.cat) return; S.cat = "Income"; S.merchant = null; S.limit = 200; render(); };
 $("#recurMore").onclick = () => { recurAll = !recurAll; drawRecurring(); };
 $("#recur tbody").addEventListener("click", e => { const r = e.target.closest("tr"); if (!r) return;
   S.cat = r.dataset.c; S.merchant = r.dataset.m; S.month = null; S.limit = 200; render();

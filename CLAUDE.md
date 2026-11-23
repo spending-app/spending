@@ -52,6 +52,8 @@ Edits to `web/` show up on a page refresh. Open `http://127.0.0.1:8765/?demo` fo
   backup goes through `strMap` / `cleanMap` / `cleanFormats` before use.
   Backup/restore is a JSON file, and restore also accepts the old CLI `rules.json`.
 - **`web/demo/`**: synthetic sample statements loaded by `?demo`.
+- **`testdata/`**: synthetic files in real banks' layouts (Wells Fargo has no header row, so it exercises
+  the column-mapping form) for manual testing. Not deployed and not auto-loaded.
 
 Real bank statements and backup files are personal data: keep them out of this repo (the
 `.gitignore` covers the usual names) and use `web/demo/` for testing.

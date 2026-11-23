@@ -309,10 +309,11 @@ const Engine = (() => {
                              "NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC").split(" "));
 
   function cleanMerchant(desc){
-    let s = desc.toUpperCase().trim();
-    s = s.replace(STRIP_PREFIX, "").replace(STRIP_PROC, "");
-    s = s.split(/\s{2,}|\s#|#|\*|\s\d{3,}|\s-\s/)[0];
-    const hasState = /\s[A-Z]{2}$/.test(desc.toUpperCase().trim());  // "... NEW YORK NY"
+    // Wells Fargo appends a card reference ("... NASHVILLE TN S386302837474920 CARD 1234")
+    const up = desc.toUpperCase().trim().replace(/\s+S\d{10,}\s+CARD\s+\d{4}$/, "");
+    let s = up.replace(STRIP_PREFIX, "").replace(STRIP_PROC, "");
+    s = s.split(/\s{2,}|\s#|#|\*|\s\d{3,}|\s-\s|\sDES:/)[0];  // DES: Bank of America ACH ("DUKE ENERGY DES:BILL PAY ...")
+    const hasState = /\s[A-Z]{2}$/.test(up);  // "... NEW YORK NY"
     s = s.replace(/\b\d+\b/g, " ").replace(/[^A-Z&' .]/g, " ");
     let words = s.split(/\s+/).filter(Boolean);
     if (hasState && words.length > 2){
