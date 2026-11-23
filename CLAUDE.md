@@ -30,6 +30,13 @@ Edits to `web/` show up on a page refresh. Open `http://127.0.0.1:8765/?demo` fo
     order) > the bank's own category > default (`Income` if positive, else `Uncategorized`).
     `category_aliases` is then applied to the result, folding bank labels like "Automotive" into our
     categories.
+  - `readCSV(text, map)`: with a `map` (`{header, date, desc, amount, debit, credit, category}` as
+    row/column indexes, -1 for none, plus `sign`), detection is skipped and those columns are used.
+    `guessMap` pre-fills the "which column is which" dialog shown when detection fails; `layoutKey`
+    fingerprints a layout so the user's mapping is reused for later files from the same bank.
+  - `findRecurring(transactions, exclude)` finds subscriptions/bills: merchants charged on a steady
+    cadence (most gaps within a weekly to yearly band) for a similar amount. It runs over all history,
+    not the selected range.
   - `compute(files, rules)` rebuilds every transaction from the stored CSV texts on each load.
     Nothing derived is stored.
   - Transaction IDs are `sha1("date|description|%.2f amount|account|n")[:16]`, deliberately
@@ -39,8 +46,10 @@ Edits to `web/` show up on a page refresh. Open `http://127.0.0.1:8765/?demo` fo
 - **`web/default-rules.js`**: keyword rules, merchant/category aliases, category descriptions
   (tooltips) and `exclude_from_spending`, shipped to every user. Users only store their own
   overrides, so improving these rules reaches everyone.
-- **`web/index.html`**: the UI plus storage. IndexedDB holds `files` (`[{name, text}]`) and `user`
-  (`{merchant_overrides, transaction_overrides}`); it falls back to memory when storage is blocked.
+- **`web/index.html`**: the UI plus storage. IndexedDB holds `files` (`[{name, text, map?}]`) and `user`
+  (`{merchant_overrides, transaction_overrides, formats}`, where `formats` maps a layout key to a
+  column mapping); it falls back to memory when storage is blocked. Anything read from storage or a
+  backup goes through `strMap` / `cleanMap` / `cleanFormats` before use.
   Backup/restore is a JSON file, and restore also accepts the old CLI `rules.json`.
 - **`web/demo/`**: synthetic sample statements loaded by `?demo`.
 

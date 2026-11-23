@@ -49,6 +49,8 @@ button.on{border-color:var(--series-1);color:var(--series-1)}
 .row .amt{text-align:right;font-variant-numeric:tabular-nums}
 .row .pct{text-align:right;color:var(--text-muted);font-size:12px}
 .row.catpick{grid-template-columns:120px 1fr 70px 36px 150px}
+#filesList .row{grid-template-columns:minmax(0,1fr) 0 60px auto;cursor:default}
+#filesList .row button{padding:2px 8px;font-size:12px}
 .row.catpick select,.row.catpick input{font-size:12px;padding:2px 4px;max-width:150px;cursor:auto}
 .row.nodrill{cursor:default}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -83,6 +85,22 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
 .verify ul{margin:6px 0 0;padding-left:18px;line-height:1.5}
 .verify li{margin-bottom:4px}
 .verify a{color:var(--series-1)}
+/* recurring charges */
+#recur table td,#recur table th{padding:6px}
+#recur tbody tr{cursor:pointer} #recur tbody tr:hover{background:var(--hover)}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:9px;border:1px solid var(--border);color:var(--text-secondary);margin-left:4px;white-space:nowrap}
+.tag.up{border-color:var(--bad);color:var(--bad)}
+tr.ended td{color:var(--text-muted)}
+/* "which column is which" dialog */
+dialog{border:1px solid var(--border);border-radius:12px;background:var(--surface-1);color:var(--text-primary);padding:18px 20px;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.mapgrid{display:grid;grid-template-columns:max-content 1fr;gap:8px 12px;align-items:center;margin:12px 0}
+.mapgrid label{color:var(--text-secondary)}
+.mapgrid select{max-width:100%}
+.prev{overflow:auto;max-height:220px;border:1px solid var(--border);border-radius:8px;margin:8px 0}
+.prev td{font-size:12px;padding:4px 8px}
+.dlgbar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.err{color:var(--bad)}
 @media (max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}
   /* narrow: title + buttons on the first row, date/account controls on their own row below */
   #rangeCtl{order:3;flex-basis:100%}}
@@ -128,6 +146,8 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
 
   <div class="card welcome" id="welcome" hidden>
     <h1>See where your money goes</h1>
+    <p>Add your bank and card statements to see your spending by month, category and merchant, plus the
+      subscriptions and bills that repeat. It looks back at what you spent; it isn't a budgeting app.</p>
     <ol>
       <li>On your bank's or card's website, open your account activity and download it as a <b>CSV</b> file (look for "Download" or "Export").</li>
       <li>Drop the files on this page, or click <b>Add statement</b>. Add as many accounts as you like.</li>
@@ -154,6 +174,14 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
     <div class="card"><h2 id="brkTitle">By category <span class="hint">· click to drill in</span></h2><div class="brk" id="brk"></div></div>
   </div>
 
+  <div class="card" id="recur" hidden style="margin-bottom:14px">
+    <h2 id="recurTitle"></h2>
+    <div style="overflow:auto"><table><thead><tr>
+      <th>Merchant</th><th>Category</th><th>How often</th><th class="num">Usual charge</th><th class="num">Per year</th><th>Last charged</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div style="text-align:center;margin-top:8px"><button id="recurMore" hidden></button></div>
+  </div>
+
   <div class="card">
     <div class="tablebar">
       <h2 style="margin:0">Transactions <span class="hint" id="txCount"></span></h2>
@@ -169,6 +197,25 @@ button.primary:hover{background:var(--series-1);filter:brightness(1.08)}
   </div>
   </div>
 </div>
+<dialog id="mapDlg">
+  <h2 style="margin:0 0 4px">Which column is which?</h2>
+  <div class="hint" id="mapIntro"></div>
+  <div class="mapgrid">
+    <label for="mHeader">Column names are in</label><select id="mHeader"></select>
+    <label for="mDate">Date</label><select id="mDate"></select>
+    <label for="mDesc">Description</label><select id="mDesc"></select>
+    <label for="mMode">Amounts are</label><select id="mMode"><option value="one">in one column</option><option value="two">in separate money-out and money-in columns</option></select>
+    <label for="mAmount" data-one>Amount</label><select id="mAmount" data-one></select>
+    <label for="mSign" data-one>Purchases show as</label><select id="mSign" data-one><option value="negative">negative numbers (−12.34)</option><option value="positive">positive numbers (12.34)</option></select>
+    <label for="mDebit" data-two>Money out</label><select id="mDebit" data-two></select>
+    <label for="mCredit" data-two>Money in</label><select id="mCredit" data-two></select>
+    <label for="mCat">Bank's category <span class="hint">(optional)</span></label><select id="mCat"></select>
+  </div>
+  <div class="hint" id="mapCount"></div>
+  <div class="prev"><table><thead><tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr></thead><tbody id="mapPrev"></tbody></table></div>
+  <div class="hint">Spending should come out negative and money coming in positive. Files with this same layout will be read this way automatically from now on.</div>
+  <div class="dlgbar"><button id="mapSkip" type="button">Skip this file</button><button id="mapOk" class="primary" type="button">Import</button></div>
+</dialog>
 <div id="tip"></div><div id="toast"></div><div id="drop">Drop statements to import</div>
 
 <script src="default-rules.js"></script>
@@ -194,7 +241,7 @@ const S = {from:null, to:null, acct:"", cat:null, merchant:null, month:null, q:"
 const PROFILE = new URLSearchParams(location.search).has("demo") ? "demo" : "main";  // sample data never mixes with yours
 const SAMPLES = ["chase_card.csv", "checking.csv", "apple_card.csv", "discover_card.csv", "amex_card.csv"];
 let FILES = [];  // [{name, text, added}]
-let USER = {merchant_overrides: {}, transaction_overrides: {}};
+let USER = {merchant_overrides: {}, transaction_overrides: {}, formats: {}};  // formats: column layouts the user picked
 
 const Store = {
   db: null, mem: {},
@@ -217,6 +264,16 @@ const Store = {
   },
 };
 async function persist(){ await Store.set("files", FILES); await Store.set("user", USER); }
+const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+// A column mapping from storage or a backup file: keep it only if it has the expected shape.
+function cleanMap(m){
+  if (!m || typeof m !== "object") return null;
+  const k = ["header", "date", "desc", "amount", "debit", "credit", "category"];
+  if (!k.every(x => Number.isInteger(m[x]) && m[x] >= -1 && m[x] < 1000) || !["negative", "positive"].includes(m.sign)) return null;
+  return Object.fromEntries([...k.map(x => [x, m[x]]), ["sign", m.sign]]);
+}
+const cleanFormats = o => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {})
+  .map(([key, m]) => [key, cleanMap(m)]).filter(([key, m]) => typeof key === "string" && m));
 const strMap = o => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).filter(([, v]) => typeof v === "string"));
 
 function load(){
@@ -292,7 +349,31 @@ function render(){
 
   drawTrend(months, focus.filter(isSpend));
   drawBreakdown(focusM);
+  drawRecurring();
   drawTable(focusM);
+}
+
+// Recurring charges use all history (a steady rhythm needs months of data), not just the chosen range.
+let recurAll = false;
+function drawRecurring(){
+  const txs = DATA.transactions.filter(t => !S.acct || t.account === S.acct);
+  const list = Engine.findRecurring(txs, DATA.exclude)
+    .filter(r => (!S.cat || r.category === S.cat) && (!S.merchant || r.merchant === S.merchant));
+  $("#recur").hidden = !list.length;
+  if (!list.length) return;
+  const active = list.filter(r => !r.ended), total = active.reduce((a, r) => a + r.yearly, 0);
+  $("#recurTitle").innerHTML = `Recurring charges <span class="hint">· ${active.length} active, about ${fmt(total)} a year`
+    + ` · charges that repeat on a steady schedule, from all your history</span>`;
+  const shown = recurAll ? list : list.slice(0, 6);
+  $("#recur tbody").innerHTML = shown.map(r => `
+    <tr data-m="${esc(r.merchant)}" data-c="${esc(r.category)}" class="${r.ended ? "ended" : ""}" title="${r.count} charges since ${r.first}. Click to see them.">
+    <td>${esc(r.merchant)}${r.priceUp ? `<span class="tag up" title="Was ${fmt2(r.priceUp)}, last charge ${fmt2(r.lastAmount)}">price up</span>` : ""}`
+    + `${r.ended ? `<span class="tag" title="No charge since ${r.last}: maybe cancelled">stopped?</span>` : ""}</td>
+    <td>${esc(r.category)}</td><td>${r.cadence}</td>
+    <td class="num">${r.varies ? "~" : ""}${fmt2(r.typical)}</td><td class="num">${fmt(r.yearly)}</td><td>${r.last}</td></tr>`).join("");
+  const more = $("#recurMore");
+  more.hidden = list.length <= 6;
+  more.textContent = recurAll ? "Show fewer" : `Show all ${list.length}`;
 }
 
 function drawTrend(months, txs){
@@ -360,6 +441,10 @@ function drawTable(txs){
 }
 
 // ---------- interaction
+$("#recurMore").onclick = () => { recurAll = !recurAll; drawRecurring(); };
+$("#recur tbody").addEventListener("click", e => { const r = e.target.closest("tr"); if (!r) return;
+  S.cat = r.dataset.c; S.merchant = r.dataset.m; S.month = null; S.limit = 200; render();
+  $("#crumbs").scrollIntoView({behavior: "smooth", block: "start"}); });
 const tip = $("#tip");
 function showTip(e, html){ tip.innerHTML = html; tip.style.display = "block";
   const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
@@ -459,8 +544,18 @@ async function upload(list){
   for (const f of list){
     if (!/\.csv$/i.test(f.name)){ msgs.push(`⚠ ${f.name}: only CSV files work. Download the statement as CSV instead.`); continue; }
     const text = await f.text();
-    try { Engine.readCSV(text); } catch (e){ msgs.push(`⚠ ${f.name}: ${e.message}`); continue; }
-    FILES = FILES.filter(x => x.name !== f.name).concat({name: f.name, text, added: Date.now()});  // same name replaces
+    let map = null;
+    try { Engine.readCSV(text); }
+    catch {  // layout not recognized: reuse a layout the user mapped before, or ask which column is which
+      const g = Engine.guessMap(text), saved = hasOwn(USER.formats, g.key) ? USER.formats[g.key] : null;
+      if (saved && readsOK(text, saved)) map = saved;
+      else {
+        const got = await askMap(f.name, text, g.map, false);
+        if (!got){ msgs.push(`Skipped ${f.name}`); continue; }
+        map = got.map; USER.formats[got.key] = map;
+      }
+    }
+    FILES = FILES.filter(x => x.name !== f.name).concat({name: f.name, text, added: Date.now(), ...(map ? {map} : {})});  // same name replaces
     added.push(f.name);
   }
   if (added.length){
@@ -474,16 +569,85 @@ async function upload(list){
   }
   if (msgs.length) toast(msgs.join("\n"));
 }
+function readsOK(text, map){ try { return Engine.readCSV(text, map).length > 0; } catch { return false; } }
+
+// The "which column is which" form. Resolves to {map, key}, "auto" (use automatic detection) or null (skipped).
+const colName = i => i < 26 ? String.fromCharCode(65 + i) : "C" + (i + 1);
+function askMap(name, text, start, editing){
+  const dlg = $("#mapDlg"), rows = Engine.guessMap(text).rows;
+  const ncol = Math.max(1, ...rows.slice(0, 50).map(r => r.length));
+  const autoOK = editing && readsOK(text, undefined);
+  $("#mapIntro").innerHTML = editing
+    ? `Pick which column holds what in <b>${esc(name)}</b>. Use this if dates, descriptions or amounts came out wrong.`
+    : `We couldn't recognize the layout of <b>${esc(name)}</b>. Tell us once which column holds what.`;
+  $("#mHeader").innerHTML = rows.slice(0, 10).map((r, i) => `<option value="${i}">Row ${i + 1}: ${esc(r.join(", ").slice(0, 60))}</option>`).join("")
+    + `<option value="-1">No row of column names: the file starts with data</option>`;
+  const fillCols = () => {
+    const h = +$("#mHeader").value, names = h >= 0 ? rows[h] : [], ex = rows[h + 1] || [];
+    const opts = [...Array(ncol).keys()].map(i => `<option value="${i}">${colName(i)}: ${esc((names[i] || "").trim() || "(no name)")}`
+      + `${(ex[i] || "").trim() ? " · e.g. " + esc(ex[i].trim().slice(0, 28)) : ""}</option>`).join("");
+    for (const id of ["mDate", "mDesc", "mAmount", "mDebit", "mCredit"]){ const el = $("#" + id), v = el.value; el.innerHTML = opts; if (v !== "") el.value = v; }
+    const c = $("#mCat"), v = c.value; c.innerHTML = `<option value="-1">(none)</option>` + opts; c.value = v || "-1";
+  };
+  const set = m => {
+    $("#mHeader").value = String(m.header); fillCols();
+    const pick = (id, v) => $("#" + id).value = String(v >= 0 ? v : 0);
+    pick("mDate", m.date); pick("mDesc", m.desc); pick("mAmount", m.amount); pick("mDebit", m.debit); pick("mCredit", m.credit);
+    $("#mCat").value = String(m.category); $("#mSign").value = m.sign; $("#mMode").value = m.amount >= 0 ? "one" : "two";
+  };
+  const get = () => { const one = $("#mMode").value === "one", n = id => +$("#" + id).value;
+    return {header: n("mHeader"), date: n("mDate"), desc: n("mDesc"), amount: one ? n("mAmount") : -1,
+            debit: one ? -1 : n("mDebit"), credit: one ? -1 : n("mCredit"), category: n("mCat"), sign: $("#mSign").value}; };
+  const preview = () => {
+    const one = $("#mMode").value === "one";
+    dlg.querySelectorAll("[data-one]").forEach(el => el.hidden = !one);
+    dlg.querySelectorAll("[data-two]").forEach(el => el.hidden = one);
+    let txs = [], err = "";
+    try { txs = Engine.readCSV(text, get()); } catch (e){ err = e.message; }
+    $("#mapCount").innerHTML = err ? `<span class="err">⚠ ${esc(err)}</span>` : `${txs.length.toLocaleString()} transactions found. The first few:`;
+    $("#mapPrev").innerHTML = txs.slice(0, 8).map(t => `<tr><td>${t.date}</td><td>${esc(t.description)}</td>`
+      + `<td class="num ${t.amount > 0 ? "pos" : ""}">${t.amount > 0 ? "+" : ""}${fmt2(t.amount)}</td></tr>`).join("");
+    $("#mapOk").disabled = !!err;
+  };
+  set(start); preview();
+  $("#mapOk").textContent = editing ? "Save" : "Import";
+  let autoBtn = $("#mapAuto");
+  if (autoBtn) autoBtn.remove();
+  if (autoOK){ autoBtn = document.createElement("button"); autoBtn.id = "mapAuto"; autoBtn.type = "button";
+    autoBtn.textContent = "Use automatic detection"; $("#mapSkip").before(autoBtn); }
+  $("#mapSkip").textContent = editing ? "Cancel" : "Skip this file";
+  return new Promise(resolve => {
+    const done = v => { dlg.onchange = null; dlg.oncancel = null; dlg.close(); resolve(v); };
+    dlg.onchange = e => { if (e.target.id === "mHeader") fillCols(); preview(); };
+    $("#mapOk").onclick = () => { const m = get(); done({map: m, key: Engine.layoutKey(rows, m.header)}); };
+    $("#mapSkip").onclick = () => done(null);
+    if (autoOK) autoBtn.onclick = () => done("auto");
+    dlg.oncancel = e => { e.preventDefault(); done(null); };  // Esc
+    dlg.showModal();
+  });
+}
+
 function renderFiles(){
   const names = FILES.map(f => f.name).sort();
   $("#filesList").innerHTML = names.length ? names.map(f => `
     <div class="row nodrill"><span class="n" title="${esc(f)}">${esc(f)}</span>
     <span></span><span class="pct">${esc(String(DATA.perFile[f] ?? 0))} tx</span>
-    <button data-rm="${esc(f)}" title="Remove this file and its transactions">✕</button></div>`).join("")
+    <span><button data-cols="${esc(f)}" title="Choose which column is the date, description and amount">Columns…</button>
+    <button data-rm="${esc(f)}" title="Remove this file and its transactions">✕</button></span></div>`).join("")
     : `<div class="empty">No statement files yet.</div>`;
 }
 $("#filesBtn").onclick = () => { const p = $("#filesPanel"); p.hidden = !p.hidden; if (!p.hidden) renderFiles(); };
 $("#filesList").onclick = async e => {
+  const c = e.target.dataset.cols;
+  if (c){
+    const file = FILES.find(x => x.name === c); if (!file) return;
+    const got = await askMap(c, file.text, file.map || Engine.guessMap(file.text).map, true);
+    if (!got) return;
+    if (got === "auto") delete file.map;
+    else { file.map = got.map; USER.formats[got.key] = got.map; }
+    await persist(); toast(`Re-read ${c}`); load(); renderFiles();
+    return;
+  }
   const f = e.target.dataset.rm;
   if (!f || !confirm(`Remove "${f}" and its transactions?`)) return;
   FILES = FILES.filter(x => x.name !== f);
@@ -504,8 +668,9 @@ $("#backupFile").onchange = async e => {
   const mo = strMap(j && j.merchant_overrides), to = strMap(j && j.transaction_overrides);
   if (j && Array.isArray(j.files)){  // full backup from this page
     if (FILES.length && !confirm(`Replace everything here with the backup "${f.name}"?`)) return;
-    FILES = j.files.filter(x => x && typeof x.name === "string" && typeof x.text === "string");
-    USER = {merchant_overrides: mo, transaction_overrides: to};
+    FILES = j.files.filter(x => x && typeof x.name === "string" && typeof x.text === "string")
+      .map(x => { const m = cleanMap(x.map); return {name: x.name, text: x.text, added: x.added, ...(m ? {map: m} : {})}; });
+    USER = {merchant_overrides: mo, transaction_overrides: to, formats: cleanFormats(j.formats)};
     toast(`Restored ${FILES.length} statement files.`);
   } else if (j && (j.merchant_overrides || j.transaction_overrides)){  // rules.json from the command-line version
     Object.assign(USER.merchant_overrides, mo); Object.assign(USER.transaction_overrides, to);
@@ -540,7 +705,8 @@ addEventListener("resize", () => render());
   try {
     FILES = (await Store.get("files")) || [];
     const u = await Store.get("user");
-    if (u) USER = {merchant_overrides: strMap(u.merchant_overrides), transaction_overrides: strMap(u.transaction_overrides)};
+    if (u) USER = {merchant_overrides: strMap(u.merchant_overrides), transaction_overrides: strMap(u.transaction_overrides),
+                   formats: cleanFormats(u.formats)};
   } catch { toast("Couldn't read saved data from this browser."); }
   if (PROFILE === "demo" && !FILES.length) await loadSamples();
   load();

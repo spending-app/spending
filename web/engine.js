@@ -112,8 +112,9 @@ const Engine = (() => {
     return null;
   }
 
-  function readCSV(text){
+  function readCSV(text, map){
     const rows = csvRows(text.replace(/^﻿/, ""));
+    if (map) return readMapped(rows.filter(r => r.some(c => c.trim())), map);  // the user told us which column is which
     let hi = null;
     for (let i = 0; i < Math.min(40, rows.length); i++){  // some banks put summary lines above the header
       const low = rows[i].map(c => c.trim().toLowerCase());
@@ -167,6 +168,130 @@ const Engine = (() => {
     }
     for (const t of out) delete t._type;
     return out;
+  }
+
+  // ------------------------------------------------------------ user-chosen column layout (when detection fails)
+  // map = {header: row index or -1 for none, date, desc, amount, debit, credit, category: column index or -1,
+  //        sign: "negative" (purchases already negative) | "positive" (purchases positive: flip)}
+
+  function readMapped(rows, m){
+    const cell = (r, i) => (i >= 0 && i < r.length) ? r[i] : "";
+    const out = [];
+    for (const r of rows.slice(m.header + 1)){
+      const d = parseDate(cell(r, m.date)), desc = cell(r, m.desc).trim();
+      if (!d || !desc) continue;
+      let v;
+      if (m.amount >= 0){
+        v = parseAmount(cell(r, m.amount));
+        if (v === null) continue;
+        if (m.sign === "positive") v = -v;
+      } else {
+        const dv = parseAmount(cell(r, m.debit)), cv = parseAmount(cell(r, m.credit));
+        if (dv === null && cv === null) continue;
+        v = Math.abs(cv || 0) - Math.abs(dv || 0);
+      }
+      out.push({date: d, description: desc, amount: v, bank_category: cell(r, m.category).trim()});
+    }
+    if (!out.length) throw new Error("no transactions found with these columns");
+    return out;
+  }
+
+  // A file's layout fingerprint: the same bank's exports share it, so a mapping can be reused.
+  function layoutKey(rows, header){
+    return header >= 0 ? "h:" + rows[header].map(c => c.trim().toLowerCase()).join("|")
+                       : "n:" + Math.max(0, ...rows.slice(0, 5).map(r => r.length));
+  }
+
+  // Best guess at a mapping, to pre-fill the "which column is which" form.
+  function guessMap(text){
+    const rows = csvRows(text.replace(/^﻿/, "")).filter(r => r.some(c => c.trim()));
+    const isDate = c => !!parseDate(c);
+    const isNum = c => !isDate(c) && /\d/.test(c) && parseAmount(c) !== null && !/[a-z]{3}/i.test(c);
+    // header: the last non-data row right before the first row that has a date in it
+    let first = rows.findIndex(r => r.some(isDate));
+    if (first < 0) first = 0;
+    const header = first > 0 ? first - 1 : -1;
+    const data = rows.slice(first, first + 40);
+    const n = Math.max(0, ...data.map(r => r.length));
+    const names = header >= 0 ? rows[header].map(c => c.trim().toLowerCase()) : [];
+    const frac = (i, f) => data.length ? data.filter(r => f((r[i] || "").trim())).length / data.length : 0;
+    const filled = i => frac(i, c => c !== "");
+    const cols = [...Array(n).keys()];
+    const date = cols.reduce((b, i) => frac(i, isDate) > (b < 0 ? 0.5 : frac(b, isDate)) ? i : b, -1);
+    const nums = cols.filter(i => i !== date && frac(i, c => c === "" || isNum(c)) > 0.9 && frac(i, isNum) > 0.2);
+    const named = (i, rx) => rx.test(names[i] || "");
+    let amount = -1, debit = -1, credit = -1;
+    const pair = nums.length >= 2 && nums.find((i, k) => k < nums.length - 1 &&
+      data.every(r => !((r[i] || "").trim() && (r[nums[k + 1]] || "").trim())));  // never both filled: out/in pair
+    if (pair !== undefined && pair !== false && filled(pair) < 0.95){
+      debit = pair; credit = nums[nums.indexOf(pair) + 1];
+      if (named(debit, /credit|deposit|in\b/) || named(credit, /debit|withdraw|out\b/)) [debit, credit] = [credit, debit];
+    } else {
+      amount = nums.find(i => named(i, /amount|amt|value|sum/)) ?? nums.find(i => !named(i, /balance/)) ?? -1;
+    }
+    const texts = cols.filter(i => i !== date && !nums.includes(i));
+    const avgLen = i => data.reduce((a, r) => a + (r[i] || "").trim().length, 0) / Math.max(1, data.length);
+    const desc = texts.find(i => named(i, /desc|payee|merchant|name|detail|memo|narrative/))
+              ?? texts.reduce((b, i) => b < 0 || avgLen(i) > avgLen(b) ? i : b, -1);
+    const category = texts.find(i => i !== desc && named(i, /categor/)) ?? -1;
+    const map = {header, date, desc, amount, debit, credit, category, sign: "negative"};
+    if (amount >= 0){  // same clues as automatic detection: are purchases positive?
+      try {
+        const txs = readMapped(rows, map);
+        const thanks = txs.filter(t => /thank\s*you/i.test(t.description) && t.amount !== 0);
+        const flip = thanks.length ? thanks.filter(t => t.amount < 0).length > thanks.length / 2
+                                   : txs.filter(t => t.amount > 0).length > txs.length / 2;
+        if (flip) map.sign = "positive";
+      } catch {}
+    }
+    return {map, rows, key: layoutKey(rows, header)};
+  }
+
+  // ------------------------------------------------------------ recurring charges (subscriptions, bills)
+
+  const CADENCES = [  // [label, period in days, accepted gap range]
+    ["Weekly", 7, 5, 9], ["Every 2 weeks", 14, 12, 16], ["Monthly", 30.44, 26, 35],
+    ["Every 3 months", 91.3, 83, 99], ["Yearly", 365.25, 350, 380]];
+  const dayNum = d => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 864e5;
+
+  // Merchants charged at a steady rhythm for a similar amount. `exclude`: categories that aren't spending.
+  function findRecurring(transactions, exclude){
+    const ex = new Set(exclude), by = new Map();
+    let asOf = 0;
+    for (const t of transactions){
+      asOf = Math.max(asOf, dayNum(t.date));
+      if (t.amount >= 0 || ex.has(t.category)) continue;
+      if (!by.has(t.merchant)) by.set(t.merchant, []);
+      by.get(t.merchant).push(t);
+    }
+    const out = [];
+    for (const [merchant, txs] of by){
+      if (txs.length < 2) continue;
+      txs.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+      const days = txs.map(t => dayNum(t.date));
+      const gaps = days.slice(1).map((d, i) => d - days[i]);
+      const med = a => { const s = [...a].sort((x, y) => x - y), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+      const g = med(gaps);
+      const cad = CADENCES.find(([, , lo, hi]) => g >= lo && g <= hi);
+      if (!cad) continue;
+      const [label, period, lo, hi] = cad;
+      if (txs.length < (period > 300 ? 2 : 3)) continue;
+      if (gaps.filter(x => x >= lo && x <= hi).length < 0.75 * gaps.length) continue;  // a steady rhythm
+      const amts = txs.map(t => -t.amount), typical = med(amts);
+      const mean = amts.reduce((a, b) => a + b, 0) / amts.length;
+      const sd = Math.sqrt(amts.reduce((a, b) => a + (b - mean) ** 2, 0) / amts.length);
+      if (sd / mean > 0.5) continue;  // amounts all over the place: not a bill
+      const last = txs[txs.length - 1], prev = amts.slice(0, -1);
+      const fixed = prev.length >= 2 && Math.max(...prev) - Math.min(...prev) <= 0.02 * med(prev);
+      const cats = {};
+      for (const t of txs) cats[t.category] = (cats[t.category] || 0) + 1;
+      out.push({merchant, category: Object.keys(cats).sort((a, b) => cats[b] - cats[a])[0],
+                cadence: label, period, count: txs.length, typical, varies: sd / mean > 0.05,
+                yearly: typical * 365.25 / period, first: txs[0].date, last: last.date, lastAmount: -last.amount,
+                priceUp: fixed && -last.amount > med(prev) * 1.02 ? med(prev) : null,
+                ended: asOf - dayNum(last.date) > period * 1.6});
+    }
+    return out.sort((a, b) => (a.ended - b.ended) || (b.yearly - a.yearly));
   }
 
   function accountFromName(name){
@@ -256,7 +381,7 @@ const Engine = (() => {
     const seenIds = new Set(), transactions = [], errors = [], perFile = Object.create(null);
     for (const f of [...files].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)){
       let txs;
-      try { txs = readCSV(f.text); } catch (e){ errors.push({file: f.name, error: e.message}); continue; }
+      try { txs = readCSV(f.text, f.map); } catch (e){ errors.push({file: f.name, error: e.message}); continue; }
       const account = accountFromName(f.name), seen = {};
       perFile[f.name] = txs.length;
       for (const t of txs){
@@ -280,7 +405,7 @@ const Engine = (() => {
             exclude: rules.exclude_from_spending, category_info: rules.category_info};
   }
 
-  return {parseDate, parseAmount, csvRows, readCSV, accountFromName, cleanMerchant, p2pPayee, merchantFor,
+  return {parseDate, parseAmount, csvRows, readCSV, guessMap, layoutKey, findRecurring, accountFromName, cleanMerchant, p2pPayee, merchantFor,
           buildRules, categoryFor, canon, compute, sha1hex};
 })();
 if (typeof module !== "undefined") module.exports = Engine;
