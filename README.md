@@ -27,6 +27,15 @@ Not ready to use your own data? Click **Try it with sample data**.
   then. **Restore backup** brings everything back, on any computer.
 - CSV only. PDF statements aren't supported.
 
+### Check it yourself
+You don't have to take our word that nothing is uploaded:
+- **Go offline.** Load the page, turn off Wi-Fi, then add statements. Everything keeps working.
+- **Watch the network.** Open your browser's developer tools (F12, or ⌥⌘I on a Mac), go to the
+  **Network** tab and add a statement. The only requests are the page loading its own files.
+- **Read the code.** It's all in `web/`, with no trackers or analytics, and the page's
+  Content-Security-Policy (`connect-src 'self'`) tells the browser to block connections to any
+  other site.
+
 ## Run it yourself
 Any static file server works, since the app is just the files in `web/`:
 ```
