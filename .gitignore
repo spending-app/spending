@@ -12,4 +12,6 @@
 !docs/*.png
 !testdata/*.csv
 !testdata/README.md
+!tests/*.js
+!tests/*.json
 .DS_Store

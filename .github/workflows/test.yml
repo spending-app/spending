@@ -1,0 +1,20 @@
+# Runs the tests on pull requests and on pushes to branches other than main
+# (main is tested by the Pages workflow before it deploys).
+name: Test
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --test

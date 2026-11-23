@@ -60,4 +60,7 @@ Any static file server works, since the app is just the files in `web/`:
 ```
 python3 -m http.server -d web 8765    # then open http://127.0.0.1:8765
 ```
-Pushing to `main` publishes `web/` to GitHub Pages (see `.github/workflows/pages.yml`).
+Tests: `node --test` (Node 18 or newer, nothing to install).
+
+Pushing to `main` publishes `web/` to GitHub Pages (see `.github/workflows/pages.yml`). Tests run first, and
+a failing test stops the deploy.

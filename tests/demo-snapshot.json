@@ -1,0 +1,47 @@
+{
+  "perFile": {
+    "amex_card.csv": 44,
+    "apple_card.csv": 44,
+    "chase_card.csv": 988,
+    "checking.csv": 89,
+    "discover_card.csv": 44
+  },
+  "errors": [],
+  "byCategory": {
+    "Car": -79.99,
+    "Cash": -460,
+    "Dining": -8328.84,
+    "Entertainment": -643.9,
+    "Fitness": -249.9,
+    "Gifts": -107.49,
+    "Groceries": -10673.72,
+    "Health": -404.24,
+    "Home": -570.26,
+    "Housing": -26950,
+    "Income": 68220.91,
+    "Insurance": -1412.4,
+    "Person to Person": -505.48,
+    "Personal": -1376.33,
+    "Pets": -843.01,
+    "Shopping": -5274.79,
+    "Subscriptions": -504.7,
+    "Transfers": 20839.6,
+    "Transport & Gas": -3971.55,
+    "Travel": -11479.8,
+    "Uncategorized": -598.05,
+    "Utilities": -1536.68
+  },
+  "recurring": [
+    "Maplewood Apartments Rent · Monthly · 2450.00",
+    "Progressive Ins Prem · Monthly · 128.40",
+    "T Mobile Postpaid · Monthly · 85.00",
+    "Peoples Gas Online · Monthly · 63.53",
+    "Chewy · Monthly · 50.24",
+    "Planet Fitness · Monthly · 24.99",
+    "Claude.ai Subscription · Monthly · 20.00",
+    "Netflix · Monthly · 15.49",
+    "Spotify · Monthly · 11.99",
+    "Venmo to Riley · Every 3 months · 33.91",
+    "Apple Services · Monthly · 2.99"
+  ]
+}

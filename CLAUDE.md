@@ -6,13 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A bank-statement spending analyzer that runs entirely in the browser. It's a static site in `web/`
 with no build step, no framework and no dependencies, published to GitHub Pages. Users' statements
-never leave their browser. There's no server-side logic and no test suite.
+never leave their browser. There's no server-side logic.
 
 ## Commands
 
 ```
 python3 -m http.server -d web 8765    # serve web/ at http://127.0.0.1:8765
+node --test                           # run tests/ (Node 18+, no dependencies)
+UPDATE_SNAPSHOTS=1 node --test        # after an intended change to sample data or default rules
 ```
+
+Tests cover `engine.js` (parsing, sign detection, column mappings, merchants, categories, transaction
+IDs, recurring charges). `tests/demo-snapshot.json` pins per-file counts, per-category totals and
+recurring charges for `web/demo/`, so any rule or parser change that moves those numbers shows up;
+review the diff before refreshing it. CI runs the tests on every push, and a failure stops the Pages
+deploy. The UI in `index.html` has no automated tests: check it in a browser.
 
 Edits to `web/` show up on a page refresh. Open `http://127.0.0.1:8765/?demo` for the sample data.
 `?demo` uses a separate browser database (`spending-demo`), so it never touches your own
