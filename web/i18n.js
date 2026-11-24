@@ -16,7 +16,7 @@ const I18N = {
       localIntro: "<b>所有数据都留在这台电脑上。</b>你的账单只在这个浏览器里读取和保存，绝不上传。记得在<b>文件与备份</b>里存一份备份。",
       verifySummary: "眼见为实",
       verifyOffline: "<b>断网试试。</b>页面打开后关掉 Wi-Fi，添加账单、改类别、备份都照常能用，因为根本不需要联网。",
-      verifyNetwork: "<b>看网络请求。</b>打开浏览器的开发者工具（F12，Mac 上是 fn+F12），切到 <b>Network</b> 标签，再添加一份账单，你会看到唯一的网络请求是这个页面自己的源码。",
+      verifyNetwork: "<b>看网络请求。</b>打开浏览器的开发者工具（F12，Mac 上是 ⌥⌘I），切到 <b>Network</b> 标签，再添加一份账单，你会看到唯一的网络请求是这个页面自己的源码。",
       verifyCode: "<b>看源代码。</b>代码全部公开在 <a href=\"https://github.com/spending-app/spending\">GitHub</a> 上，没有任何追踪或统计。页面的安全策略还会让浏览器拦截一切连到其他网站的请求。",
       demoBar: "你正在看<b>示例数据</b>，和你自己的数据分开保存。<a href=\"./\">回到我的数据</a>",
       noStore: "这个浏览器不让页面保存数据（无痕窗口？）。关掉标签页后，添加的内容都会消失。",
@@ -41,7 +41,7 @@ const I18N = {
       mDebitL: "支出", mCreditL: "收入", mCatL: "银行的类别 <span class=\"hint\">（可选）</span>",
       prevDate: "日期", prevDesc: "描述", prevAmount: "金额",
       mapHint: "消费应该显示为负数，收入为正数。以后同样格式的文件会自动按这个方式读取。",
-      drop: "点击即可导入账单",
+      drop: "拖动文件导入账单",
     },
     text: {
       "All accounts": "所有账户",
@@ -75,7 +75,7 @@ const I18N = {
       "Pick which column holds what in <b>{file}</b>. Use this if dates, descriptions or amounts came out wrong.":
         "选择 <b>{file}</b> 里每一列是什么。日期、描述或金额读错时用这个修正。",
       "We couldn't recognize the layout of <b>{file}</b>. Tell us once which column holds what.":
-        "未能识别 <b>{file}</b> 的格式，请手动输入。",
+        "未能识别 <b>{file}</b> 的格式，请手动选择每一列。",
       "Row {n}": "第 {n} 行", "No row of column names: the file starts with data": "文件第一行就是数据",
       "(no name)": "（无列名）", "e.g.": "例如", "(none)": "（无）",
       "{n} transactions found. The first few:": "找到 {n} 笔交易。前几笔：",
