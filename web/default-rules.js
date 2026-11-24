@@ -46,7 +46,9 @@ const DEFAULT_RULES = {
     "SEPTA": "SEPTA",
     "WMATA": "WMATA",
     "MARTA ": "MARTA",
-    "SUNPASS": "SunPass"
+    "SUNPASS": "SunPass",
+    "HELLOFRESH": "HelloFresh",
+    "YOUTUBE PREMIUM": "YouTube Premium"
   },
   "category_aliases": {
     "Automotive": "Car",
@@ -213,6 +215,10 @@ const DEFAULT_RULES = {
     {
       "category": "Groceries",
       "keywords": [
+        "hellofresh",
+        "blue apron",
+        "home chef",
+        "everyplate",
         "whole foods",
         "wholefds",
         "trader joe",
@@ -272,6 +278,7 @@ const DEFAULT_RULES = {
     {
       "category": "Utilities",
       "keywords": [
+        "water dept",
         "verizon",
         "at&t",
         "t-mobile",

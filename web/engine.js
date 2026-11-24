@@ -277,18 +277,23 @@ const Engine = (() => {
       const [label, period, lo, hi] = cad;
       if (txs.length < (period > 300 ? 2 : 3)) continue;
       if (gaps.filter(x => x >= lo && x <= hi).length < 0.75 * gaps.length) continue;  // a steady rhythm
-      const amts = txs.map(t => -t.amount), typical = med(amts);
+      const amts = txs.map(t => -t.amount);
       const mean = amts.reduce((a, b) => a + b, 0) / amts.length;
       const sd = Math.sqrt(amts.reduce((a, b) => a + (b - mean) ** 2, 0) / amts.length);
       if (sd / mean > 0.5) continue;  // amounts all over the place: not a bill
-      const last = txs[txs.length - 1], prev = amts.slice(0, -1);
-      const fixed = prev.length >= 2 && Math.max(...prev) - Math.min(...prev) <= 0.02 * med(prev);
+      // A price increase: a steady old price, then every charge since at one higher price.
+      const last = txs[txs.length - 1], now = -last.amount, near = (a, b) => Math.abs(a - b) <= 0.02 * b;
+      let start = amts.length - 1;
+      while (start > 0 && near(amts[start - 1], now)) start--;
+      const before = amts.slice(0, start), was = before.length >= 2 ? med(before) : 0;
+      const priceUp = was && before.every(a => near(a, was)) && now > was * 1.02 ? was : null;
+      const typical = priceUp ? now : med(amts);
       const cats = {};
       for (const t of txs) cats[t.category] = (cats[t.category] || 0) + 1;
       out.push({merchant, category: Object.keys(cats).sort((a, b) => cats[b] - cats[a])[0],
-                cadence: label, period, count: txs.length, typical, varies: sd / mean > 0.05,
+                cadence: label, period, count: txs.length, typical, varies: !priceUp && sd / mean > 0.05,
                 yearly: typical * 365.25 / period, first: txs[0].date, last: last.date, lastAmount: -last.amount,
-                priceUp: fixed && -last.amount > med(prev) * 1.02 ? med(prev) : null,
+                priceUp,
                 ended: asOf - dayNum(last.date) > period * 1.6});
     }
     return out.sort((a, b) => (a.ended - b.ended) || (b.yearly - a.yearly));

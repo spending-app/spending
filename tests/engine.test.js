@@ -256,6 +256,17 @@ test("findRecurring: price increases, varying bills and stopped charges are flag
   assert.equal(later[0].ended, true);
 });
 
+test("findRecurring: a price increase stays flagged after the first higher charge", () => {
+  const [r] = E.findRecurring(months("YouTube", [13.99, 13.99, 13.99, 15.99, 15.99, 15.99]), []);
+  assert.equal(r.priceUp, 13.99);
+  assert.equal(r.typical, 15.99, "the usual amount is the new price");
+  assert.equal(r.varies, false);
+  const [down] = E.findRecurring(months("YouTube", [15.99, 15.99, 15.99, 13.99, 13.99]), []);
+  assert.equal(down.priceUp, null, "a price drop isn't flagged");
+  const [bill] = E.findRecurring(months("Electric", [60, 95, 72, 81, 81], "06", "Utilities"), []);
+  assert.equal(bill.priceUp, null, "a varying bill isn't a price increase");
+});
+
 test("findRecurring: irregular spending, income and excluded categories are ignored", () => {
   const coffee = [1, 2, 4, 5, 9, 10, 11, 16, 20, 21].map(d => charge("Coffee", `2026-03-${String(d).padStart(2, "0")}`, 4.5, "Dining"));
   const groceries = months("Kroger", [20, 140, 35, 160], "10", "Groceries");  // monthly but amounts all over the place
