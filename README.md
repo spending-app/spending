@@ -23,6 +23,7 @@ Not ready to use your own data? Click **Try it with sample data**.
   remembers that choice for that merchant's future statements. In a category's merchant list, each
   merchant has its own category picker.
 - Hover over a category to see what belongs in it.
+- English and Chinese (中文): picked from your browser's language, or switch with the 中文 / EN button.
 - **Recurring charges** lists subscriptions and bills found from charges that repeat on a steady
   schedule (weekly to yearly), with what each costs per year. It flags price increases and charges
   that seem to have stopped.

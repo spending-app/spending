@@ -59,6 +59,11 @@ Edits to `web/` show up on a page refresh. Open `http://127.0.0.1:8765/?demo` fo
   column mapping); it falls back to memory when storage is blocked. Anything read from storage or a
   backup goes through `strMap` / `cleanMap` / `cleanFormats` before use.
   Backup/restore is a JSON file, and restore also accepts the old CLI `rules.json`.
+- **`web/i18n.js`**: Chinese interface text. English stays inline in `index.html`: static text has
+  `data-i18n="id"` (looked up in `I18N.zh.ui`), text built in JS goes through `t("English {var}")`
+  (looked up in `I18N.zh.text`). Categories are translated for display only (`catLabel`); stored
+  data, option values, rules and backups keep the English names. `tests/i18n.test.js` fails if any
+  id, `t()` string or default category lacks a Chinese entry, so add the translation with the text.
 - **`web/demo/`**: synthetic sample statements loaded by `?demo`.
 - **`testdata/`**: synthetic files in real banks' layouts (Wells Fargo has no header row, so it exercises
   the column-mapping form) for manual testing. Not deployed and not auto-loaded.

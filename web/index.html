@@ -100,6 +100,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .mapgrid select{max-width:100%}
 .prev{overflow:auto;max-height:220px;border:1px solid var(--border);border-radius:8px;margin:8px 0}
 .prev td{font-size:12px;padding:4px 8px}
+.prev td:first-child,.prev td.num{white-space:nowrap}
 .dlgbar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
 .err{color:var(--bad)}
 @media (max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}
@@ -113,57 +114,58 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   <div class="bar">
     <h1>Spending</h1>
     <span id="rangeCtl" class="bar" style="margin:0">
-      <select id="from" title="From month"></select><span>→</span><select id="to" title="To month"></select>
-      <button data-q="12">Last 12 mo</button><button data-q="ytd">This year</button><button data-q="all">All</button>
+      <select id="from" title="From month" data-i18n-title="fromTitle"></select><span>→</span><select id="to" title="To month" data-i18n-title="toTitle"></select>
+      <button data-q="12" data-i18n="q12">Last 12 mo</button><button data-q="ytd" data-i18n="qytd">This year</button><button data-q="all" data-i18n="qall">All</button>
       <select id="acct"></select>
     </span>
     <span class="spacer"></span>
-    <button class="addBtn" type="button">＋ Add<span class="wide"> statement</span></button>
-    <button id="filesBtn" type="button">Files &amp; backup</button>
+    <button class="addBtn" type="button" data-i18n="addTop">＋ Add<span class="wide"> statement</span></button>
+    <button id="filesBtn" type="button" data-i18n="filesBtn">Files &amp; backup</button>
+    <button id="langBtn" type="button" title="Language / 语言">中文</button>
   </div>
   <input id="file" type="file" accept=".csv,text/csv" multiple hidden>
   <input id="backupFile" type="file" accept=".json,application/json" hidden>
 
   <div class="local"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-    <span><b>Everything stays on this computer.</b> Your statements are read and saved in this browser only, never uploaded. Keep a copy now and then with <b>Files &amp; backup</b>.
-    <details class="verify"><summary>Don't take our word for it</summary>
+    <span><span data-i18n="localIntro"><b>Everything stays on this computer.</b> Your statements are read and saved in this browser only, never uploaded. Keep a copy now and then with <b>Files &amp; backup</b>.</span>
+    <details class="verify"><summary data-i18n="verifySummary">Don't take our word for it</summary>
       <ul>
-        <li><b>Go offline.</b> Once this page has loaded, turn off Wi-Fi. Adding statements, changing categories and backups all keep working, because nothing needs the internet.</li>
-        <li><b>Watch the network.</b> Open your browser's developer tools (F12, or ⌥⌘I on a Mac), pick the <b>Network</b> tab, then add a statement. Nothing is sent: the only requests are this page loading its own files.</li>
-        <li><b>Read the code.</b> It's all public on <a href="https://github.com/spending-app/spending">GitHub</a>, with no trackers or analytics. The page's security policy also tells your browser to block any connection to another site.</li>
+        <li data-i18n="verifyOffline"><b>Go offline.</b> Once this page has loaded, turn off Wi-Fi. Adding statements, changing categories and backups all keep working, because nothing needs the internet.</li>
+        <li data-i18n="verifyNetwork"><b>Watch the network.</b> Open your browser's developer tools (F12, or ⌥⌘I on a Mac), pick the <b>Network</b> tab, then add a statement. Nothing is sent: the only requests are this page loading its own files.</li>
+        <li data-i18n="verifyCode"><b>Read the code.</b> It's all public on <a href="https://github.com/spending-app/spending">GitHub</a>, with no trackers or analytics. The page's security policy also tells your browser to block any connection to another site.</li>
       </ul></details></span></div>
-  <div class="banner" id="demoBar" hidden>You're looking at <b>sample data</b>, kept separate from your own. <a href="./">Back to your data</a></div>
-  <div class="banner warn" id="noStore" hidden>This browser isn't letting the page save (a private window?). Anything you add disappears when you close the tab.</div>
+  <div class="banner" id="demoBar" hidden data-i18n="demoBar">You're looking at <b>sample data</b>, kept separate from your own. <a href="./">Back to your data</a></div>
+  <div class="banner warn" id="noStore" hidden data-i18n="noStore">This browser isn't letting the page save (a private window?). Anything you add disappears when you close the tab.</div>
 
   <div class="card" id="filesPanel" hidden style="margin-bottom:14px">
-    <h2>Statement files <span class="hint">· removing a file removes its transactions too</span></h2>
+    <h2 data-i18n="filesTitle">Statement files <span class="hint">· removing a file removes its transactions too</span></h2>
     <div id="filesList" class="brk"></div>
     <div class="tablebar" style="margin:12px 0 0">
-      <button id="backupBtn" type="button">Download backup</button>
-      <button class="restoreBtn" type="button">Restore backup…</button>
-      <span class="hint">Your statements and category choices live only in this browser. Keep a backup: clearing browser data erases them.</span>
+      <button id="backupBtn" type="button" data-i18n="backupBtn">Download backup</button>
+      <button class="restoreBtn" type="button" data-i18n="restoreBtn">Restore backup…</button>
+      <span class="hint" data-i18n="filesHint">Your statements and category choices live only in this browser. Keep a backup: clearing browser data erases them.</span>
     </div>
   </div>
 
   <div class="card welcome" id="welcome" hidden>
-    <h1>See where your money goes</h1>
-    <p>Add your bank and card statements to see your spending by month, category and merchant, plus the
+    <h1 data-i18n="welcomeTitle">See where your money goes</h1>
+    <p data-i18n="welcomeIntro">Add your bank and card statements to see your spending by month, category and merchant, plus the
       subscriptions and bills that repeat. It looks back at what you spent; it isn't a budgeting app.</p>
     <ol>
-      <li>On your bank's or card's website, open your account activity and download it as a <b>CSV</b> file (look for "Download" or "Export").</li>
-      <li>Drop the files on this page, or click <b>Add statement</b>. Add as many accounts as you like.</li>
+      <li data-i18n="welcomeStep1">On your bank's or card's website, open your account activity and download it as a <b>CSV</b> file (look for "Download" or "Export").</li>
+      <li data-i18n="welcomeStep2">Drop the files on this page, or click <b>Add statement</b>. Add as many accounts as you like.</li>
     </ol>
     <div class="tablebar">
-      <button class="addBtn primary" type="button">＋ Add statement</button>
-      <a class="btn" id="sampleLink" href="?demo">Try it with sample data</a>
-      <button class="restoreBtn" type="button">Restore a backup…</button>
+      <button class="addBtn primary" type="button" data-i18n="addWelcome">＋ Add statement</button>
+      <a class="btn" id="sampleLink" href="?demo" data-i18n="sampleLink">Try it with sample data</a>
+      <button class="restoreBtn" type="button" data-i18n="restoreWelcome">Restore a backup…</button>
     </div>
   </div>
 
   <div id="dash">
   <div class="kpis">
     <div class="card kpi"><div class="l" id="kSpentL">Spent</div><div class="v" id="kSpent">–</div></div>
-    <div class="card kpi"><div class="l">Avg per month</div><div class="v" id="kAvg">–</div></div>
+    <div class="card kpi"><div class="l" data-i18n="kAvgL">Avg per month</div><div class="v" id="kAvg">–</div></div>
     <div class="card kpi" id="kIncCard"><div class="l" id="kIncL">Income</div><div class="v" id="kInc">–</div></div>
     <div class="card kpi"><div class="l" id="kNetL">Net (income − spent)</div><div class="v" id="kNet">–</div></div>
   </div>
@@ -171,70 +173,98 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   <div class="crumbs" id="crumbs"></div>
 
   <div class="grid2">
-    <div class="card" id="trend"><h2>By month <span class="hint">· click a bar to focus that month</span></h2><svg role="img" aria-label="Monthly spending"></svg></div>
+    <div class="card" id="trend"><h2 data-i18n="trendTitle">By month <span class="hint">· click a bar to focus that month</span></h2><svg role="img" aria-label="Monthly spending"></svg></div>
     <div class="card"><h2 id="brkTitle">By category <span class="hint">· click to drill in</span></h2><div class="brk" id="brk"></div></div>
   </div>
 
   <div class="card" id="recur" hidden style="margin-bottom:14px">
     <h2 id="recurTitle"></h2>
     <div style="overflow:auto"><table><thead><tr>
-      <th>Merchant</th><th>Category</th><th>How often</th><th class="num">Usual charge</th><th class="num">Per year</th><th>Last charged</th>
+      <th data-i18n="recurMerchant">Merchant</th><th data-i18n="recurCategory">Category</th><th data-i18n="recurHow">How often</th><th class="num" data-i18n="recurUsual">Usual charge</th><th class="num" data-i18n="recurYear">Per year</th><th data-i18n="recurLast">Last charged</th>
     </tr></thead><tbody></tbody></table></div>
     <div style="text-align:center;margin-top:8px"><button id="recurMore" hidden></button></div>
   </div>
 
   <div class="card">
     <div class="tablebar">
-      <h2 style="margin:0">Transactions <span class="hint" id="txCount"></span></h2>
+      <h2 style="margin:0"><span data-i18n="txTitle">Transactions</span> <span class="hint" id="txCount"></span></h2>
       <span class="spacer"></span>
-      <input id="search" placeholder="Search…" size="18">
-      <label><input type="checkbox" id="scopeAll" checked> Category change applies to all from that merchant</label>
+      <input id="search" placeholder="Search…" data-i18n-placeholder="search" size="18">
+      <label><input type="checkbox" id="scopeAll" checked> <span data-i18n="scopeAll">Category change applies to all from that merchant</span></label>
     </div>
     <div style="overflow:auto"><table id="tx"><thead><tr>
-      <th data-k="date">Date</th><th data-k="merchant">Merchant</th><th data-k="description">Description</th>
-      <th data-k="account">Account</th><th data-k="category">Category</th><th data-k="amount" class="num">Amount</th>
+      <th data-k="date" data-i18n="thDate">Date</th><th data-k="merchant" data-i18n="thMerchant">Merchant</th><th data-k="description" data-i18n="thDesc">Description</th>
+      <th data-k="account" data-i18n="thAccount">Account</th><th data-k="category" data-i18n="thCategory">Category</th><th data-k="amount" class="num" data-i18n="thAmount">Amount</th>
     </tr></thead><tbody></tbody></table></div>
-    <div style="text-align:center;margin-top:8px"><button id="more" hidden>Show more</button></div>
+    <div style="text-align:center;margin-top:8px"><button id="more" hidden data-i18n="more">Show more</button></div>
   </div>
   </div>
 </div>
 <dialog id="mapDlg">
-  <h2 style="margin:0 0 4px">Which column is which?</h2>
+  <h2 style="margin:0 0 4px" data-i18n="mapTitle">Which column is which?</h2>
   <div class="hint" id="mapIntro"></div>
   <div class="mapgrid">
-    <label for="mHeader">Column names are in</label><select id="mHeader"></select>
-    <label for="mDate">Date</label><select id="mDate"></select>
-    <label for="mDesc">Description</label><select id="mDesc"></select>
-    <label for="mMode">Amounts are</label><select id="mMode"><option value="one">in one column</option><option value="two">in separate money-out and money-in columns</option></select>
-    <label for="mAmount" data-one>Amount</label><select id="mAmount" data-one></select>
-    <label for="mSign" data-one>Purchases show as</label><select id="mSign" data-one><option value="negative">negative numbers (−12.34)</option><option value="positive">positive numbers (12.34)</option></select>
-    <label for="mDebit" data-two>Money out</label><select id="mDebit" data-two></select>
-    <label for="mCredit" data-two>Money in</label><select id="mCredit" data-two></select>
-    <label for="mCat">Bank's category <span class="hint">(optional)</span></label><select id="mCat"></select>
+    <label for="mHeader" data-i18n="mHeaderL">Column names are in</label><select id="mHeader"></select>
+    <label for="mDate" data-i18n="mDateL">Date</label><select id="mDate"></select>
+    <label for="mDesc" data-i18n="mDescL">Description</label><select id="mDesc"></select>
+    <label for="mMode" data-i18n="mModeL">Amounts are</label><select id="mMode"><option value="one" data-i18n="mModeOne">in one column</option><option value="two" data-i18n="mModeTwo">in separate money-out and money-in columns</option></select>
+    <label for="mAmount" data-one data-i18n="mAmountL">Amount</label><select id="mAmount" data-one></select>
+    <label for="mSign" data-one data-i18n="mSignL">Purchases show as</label><select id="mSign" data-one><option value="negative" data-i18n="mSignNeg">negative numbers (−12.34)</option><option value="positive" data-i18n="mSignPos">positive numbers (12.34)</option></select>
+    <label for="mDebit" data-two data-i18n="mDebitL">Money out</label><select id="mDebit" data-two></select>
+    <label for="mCredit" data-two data-i18n="mCreditL">Money in</label><select id="mCredit" data-two></select>
+    <label for="mCat" data-i18n="mCatL">Bank's category <span class="hint">(optional)</span></label><select id="mCat"></select>
   </div>
   <div class="hint" id="mapCount"></div>
-  <div class="prev"><table><thead><tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr></thead><tbody id="mapPrev"></tbody></table></div>
-  <div class="hint">Spending should come out negative and money coming in positive. Files with this same layout will be read this way automatically from now on.</div>
+  <div class="prev"><table><thead><tr><th data-i18n="prevDate">Date</th><th data-i18n="prevDesc">Description</th><th class="num" data-i18n="prevAmount">Amount</th></tr></thead><tbody id="mapPrev"></tbody></table></div>
+  <div class="hint" data-i18n="mapHint">Spending should come out negative and money coming in positive. Files with this same layout will be read this way automatically from now on.</div>
   <div class="dlgbar"><button id="mapSkip" type="button">Skip this file</button><button id="mapOk" class="primary" type="button">Import</button></div>
 </dialog>
-<div id="tip"></div><div id="toast"></div><div id="drop">Drop statements to import</div>
+<div id="tip"></div><div id="toast"></div><div id="drop" data-i18n="drop">Drop statements to import</div>
 
 <script src="default-rules.js"></script>
 <script src="engine.js"></script>
+<script src="i18n.js"></script>
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
 const fmt = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0});
 const fmt2 = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const monthLabel = m => { const [y,mo] = m.split("-"); return new Date(+y, +mo-1, 1).toLocaleString(undefined,{month:"short",year:"2-digit"}); };
+// "Oct ’26" = October 2026 (a bare "Oct 26" reads like a date)
+const monthLabel = m => { const [y,mo] = m.split("-");
+  return LANG === "zh" ? `${y.slice(2)}年${+mo}月` : new Date(+y, +mo-1, 1).toLocaleString("en-US",{month:"short"}) + " ’" + y.slice(2); };
+
+// ---------- language: English inline, others from i18n.js. Chosen by the browser's language, or the 中文/EN button.
+let LANG = "";
+try { LANG = localStorage.getItem("lang") || ""; } catch {}
+if (!["en", "zh"].includes(LANG)) LANG = (navigator.languages || [navigator.language || ""]).some(l => /^zh\b/i.test(l)) ? "zh" : "en";
+const L = () => LANG === "en" ? null : I18N[LANG];
+const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+// t(englishText, vars): the English text, with {placeholders}, is the lookup key.
+function t(en, vars = {}){ const d = L(), s = (d && own(d.text, en)) ? d.text[en] : en;
+  return s.replace(/\{(\w+)\}/g, (m, k) => own(vars, k) ? vars[k] : m); }
+const catLabel = c => { const d = L(); return d && own(d.categories, c) ? d.categories[c] : c; };  // display only
+function applyStatic(){
+  const d = L();
+  document.documentElement.lang = LANG === "zh" ? "zh-CN" : "en";
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+    el.innerHTML = d && own(d.ui, el.dataset.i18n) ? d.ui[el.dataset.i18n] : el.dataset.en; });
+  for (const attr of ["title", "placeholder"]) document.querySelectorAll(`[data-i18n-${attr}]`).forEach(el => {
+    const keep = "en" + attr;
+    if (el.dataset[keep] === undefined) el.dataset[keep] = el.getAttribute(attr) || "";
+    const id = el.getAttribute(`data-i18n-${attr}`);
+    el.setAttribute(attr, d && own(d.ui, id) ? d.ui[id] : el.dataset[keep]); });
+  $("#langBtn").textContent = LANG === "zh" ? "EN" : "中文";
+  document.title = PROFILE === "demo" ? t("Spending (sample data)") : t("Spending");
+}
 
 let DATA = {transactions:[], categories:[], exclude:[], category_info:{}};
-const catInfo = c => Object.prototype.hasOwnProperty.call(DATA.category_info, c) ? DATA.category_info[c] : "";
+const catInfo = c => { const d = L(); return d && own(d.categoryInfo, c) ? d.categoryInfo[c] : own(DATA.category_info, c) ? DATA.category_info[c] : ""; };
 function catOptions(current){
   const cats = DATA.categories.includes(current) ? DATA.categories : [current, ...DATA.categories];
-  return cats.map(c => `<option title="${esc(catInfo(c))}"${c === current ? " selected" : ""}>${esc(c)}</option>`).join("")
-    + `<option value="__new">+ New category…</option>`;
+  return cats.map(c => `<option value="${esc(c)}" title="${esc(catInfo(c))}"${c === current ? " selected" : ""}>${esc(catLabel(c))}</option>`).join("")
+    + `<option value="__new">${t("+ New category…")}</option>`;
 }
 const S = {from:null, to:null, acct:"", cat:null, merchant:null, month:null, q:"", sort:"date", dir:-1, limit:200};
 
@@ -265,7 +295,6 @@ const Store = {
   },
 };
 async function persist(){ await Store.set("files", FILES); await Store.set("user", USER); }
-const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 // A column mapping from storage or a backup file: keep it only if it has the expected shape.
 function cleanMap(m){
   if (!m || typeof m !== "object") return null;
@@ -287,7 +316,7 @@ function load(){
   if (!S.from || !months.includes(S.from)) quick("12", false);
   $("#from").value = S.from; $("#to").value = S.to;
   const accts = [...new Set(DATA.transactions.map(t => t.account))].sort();
-  $("#acct").innerHTML = `<option value="">All accounts</option>` + accts.map(a => `<option>${esc(a)}</option>`).join("");
+  $("#acct").innerHTML = `<option value="">${t("All accounts")}</option>` + accts.map(a => `<option>${esc(a)}</option>`).join("");
   $("#acct").value = S.acct;
   render();
 }
@@ -331,31 +360,31 @@ function render(){
   const periodAll = range.filter(t => !S.month || t.date.startsWith(S.month));
   const nMonths = S.month ? 1 : Math.max(1, months.length);
   $("#kSpent").textContent = fmt(spent);
-  $("#kSpentL").textContent = (F.income ? "Income" : "Spent") + (S.month ? " in " + monthLabel(S.month) : "");
+  $("#kSpentL").textContent = S.month ? t(F.income ? "Income in {month}" : "Spent in {month}", {month: monthLabel(S.month)}) : t(F.income ? "Income" : "Spent");
   $("#kAvg").textContent = fmt(spent / nMonths);
   $("#kIncCard").classList.toggle("click", !S.cat);
-  $("#kIncCard").title = S.cat ? "" : "Click to see where your income comes from";
+  $("#kIncCard").title = S.cat ? "" : t("Click to see where your income comes from");
   if (F.income){
-    $("#kIncL").textContent = "Sources"; $("#kInc").textContent = new Set(focusM.filter(F.keep).map(t => t.merchant)).size.toLocaleString();
-    $("#kNetL").textContent = "Transactions"; $("#kNet").textContent = focusM.filter(F.keep).length.toLocaleString();
+    $("#kIncL").textContent = t("Sources"); $("#kInc").textContent = new Set(focusM.filter(F.keep).map(t => t.merchant)).size.toLocaleString();
+    $("#kNetL").textContent = t("Transactions"); $("#kNet").textContent = focusM.filter(F.keep).length.toLocaleString();
     $("#kNet").style.color = "";
   } else if (S.cat){  // drilled in: income/net are meaningless, show share + count instead
     const all = periodAll.filter(isSpend).reduce((a,t) => a + spendOf(t), 0);
-    $("#kIncL").textContent = "Share of all spending"; $("#kInc").textContent = all ? Math.round(spent/all*100) + "%" : "–";
-    $("#kNetL").textContent = "Transactions"; $("#kNet").textContent = focusM.filter(isSpend).length.toLocaleString();
+    $("#kIncL").textContent = t("Share of all spending"); $("#kInc").textContent = all ? Math.round(spent/all*100) + "%" : "–";
+    $("#kNetL").textContent = t("Transactions"); $("#kNet").textContent = focusM.filter(isSpend).length.toLocaleString();
     $("#kNet").style.color = "";
   } else {
     const income = periodAll.filter(t => t.category === "Income").reduce((a,t) => a + t.amount, 0);
-    $("#kIncL").textContent = "Income ›"; $("#kInc").textContent = fmt(income);
-    $("#kNetL").textContent = "Net (income − spent)"; $("#kNet").textContent = fmt(income - spent);
+    $("#kIncL").textContent = t("Income ›"); $("#kInc").textContent = fmt(income);
+    $("#kNetL").textContent = t("Net (income − spent)"); $("#kNet").textContent = fmt(income - spent);
     $("#kNet").style.color = (income - spent) >= 0 ? "var(--good)" : "var(--bad)";
   }
 
   // breadcrumb
-  const c = [`<a data-c="root">${F.income ? "Overview" : "All spending"}</a>`];
-  if (S.cat) c.push(`<a data-c="cat" title="${esc(catInfo(S.cat))}">${esc(S.cat)}</a>`);
+  const c = [`<a data-c="root">${t(F.income ? "Overview" : "All spending")}</a>`];
+  if (S.cat) c.push(`<a data-c="cat" title="${esc(catInfo(S.cat))}">${esc(catLabel(S.cat))}</a>`);
   if (S.merchant) c.push(`<a data-c="merchant">${esc(S.merchant)}</a>`);
-  if (S.month) c.push(`<a data-c="month" title="Click to clear month">${monthLabel(S.month)} ✕</a>`);
+  if (S.month) c.push(`<a data-c="month" title="${t("Click to clear month")}">${monthLabel(S.month)} ✕</a>`);
   $("#crumbs").innerHTML = c.join(`<span class="sep">›</span>`);
 
   drawTrend(months, focus.filter(F.keep), F.val);
@@ -373,18 +402,18 @@ function drawRecurring(){
   $("#recur").hidden = !list.length;
   if (!list.length) return;
   const active = list.filter(r => !r.ended), total = active.reduce((a, r) => a + r.yearly, 0);
-  $("#recurTitle").innerHTML = `Recurring charges <span class="hint">· ${active.length} active, about ${fmt(total)} a year`
-    + ` · charges that repeat on a steady schedule, from all your history</span>`;
+  $("#recurTitle").innerHTML = `${t("Recurring charges")} <span class="hint">· ${t("{n} active, about {total} a year", {n: active.length, total: fmt(total)})}`
+    + ` · ${t("charges that repeat on a steady schedule, from all your history")}</span>`;
   const shown = recurAll ? list : list.slice(0, 6);
   $("#recur tbody").innerHTML = shown.map(r => `
-    <tr data-m="${esc(r.merchant)}" data-c="${esc(r.category)}" class="${r.ended ? "ended" : ""}" title="${r.count} charges since ${r.first}. Click to see them.">
-    <td>${esc(r.merchant)}${r.priceUp ? `<span class="tag up" title="Was ${fmt2(r.priceUp)}, last charge ${fmt2(r.lastAmount)}">price up</span>` : ""}`
-    + `${r.ended ? `<span class="tag" title="No charge since ${r.last}: maybe cancelled">stopped?</span>` : ""}</td>
-    <td>${esc(r.category)}</td><td>${r.cadence}</td>
+    <tr data-m="${esc(r.merchant)}" data-c="${esc(r.category)}" class="${r.ended ? "ended" : ""}" title="${t("{count} charges since {first}. Click to see them.", {count: r.count, first: r.first})}">
+    <td>${esc(r.merchant)}${r.priceUp ? `<span class="tag up" title="${t("Was {was}, last charge {now}", {was: fmt2(r.priceUp), now: fmt2(r.lastAmount)})}">${t("price up")}</span>` : ""}`
+    + `${r.ended ? `<span class="tag" title="${t("No charge since {date}: maybe cancelled", {date: r.last})}">${t("stopped?")}</span>` : ""}</td>
+    <td>${esc(catLabel(r.category))}</td><td>${t(r.cadence)}</td>
     <td class="num">${r.varies ? "~" : ""}${fmt2(r.typical)}</td><td class="num">${fmt(r.yearly)}</td><td>${r.last}</td></tr>`).join("");
   const more = $("#recurMore");
   more.hidden = list.length <= 6;
-  more.textContent = recurAll ? "Show fewer" : `Show all ${list.length}`;
+  more.textContent = recurAll ? t("Show fewer") : t("Show all {n}", {n: list.length});
 }
 
 function drawTrend(months, txs, val){
@@ -417,22 +446,23 @@ function fmtShort(v){ return v >= 1000 ? "$" + (v/1000).toFixed(v >= 10000 ? 0 :
 
 function drawBreakdown(txs){
   const key = S.merchant ? null : (S.cat ? "merchant" : "category"), F = flow();
-  $("#brkTitle").innerHTML = key === "category" ? `By category <span class="hint">· click to drill in</span>`
-    : key === "merchant" ? `${F.income ? "Income sources" : "Merchants in " + esc(S.cat)} <span class="hint">· click to see transactions</span>`
-    : `${esc(S.merchant)} <span class="hint">· by account</span>`;
+  $("#brkTitle").innerHTML = key === "category" ? `${t("By category")} <span class="hint">· ${t("click to drill in")}</span>`
+    : key === "merchant" ? `${F.income ? t("Income sources") : t("Merchants in {cat}", {cat: esc(catLabel(S.cat))})} <span class="hint">· ${t("click to see transactions")}</span>`
+    : `${esc(S.merchant)} <span class="hint">· ${t("by account")}</span>`;
   const k = key || "account";
   const g = {};
   txs.filter(F.keep).forEach(t => { const n = t[k]; (g[n] = g[n] || {v:0,n:0,cat:t.category}); g[n].v += F.val(t); g[n].n++; });
   const rows = Object.entries(g).sort((a,b) => b[1].v - a[1].v);
   const total = rows.reduce((a,[,o]) => a + Math.max(0,o.v), 0);
   const max = Math.max(1, ...rows.map(([,o]) => o.v));
-  if (!rows.length){ $("#brk").innerHTML = `<div class="empty">No ${F.income ? "income" : "spending"} here.</div>`; return; }
+  if (!rows.length){ $("#brk").innerHTML = `<div class="empty">${t(F.income ? "No income here." : "No spending here.")}</div>`; return; }
+  const label = n => key === "category" ? catLabel(n) : n;
   $("#brk").innerHTML = rows.map(([n,o]) => `
-    <div class="row ${key ? "" : "nodrill"}${key === "merchant" ? " catpick" : ""}" data-n="${esc(n)}" data-v="${o.v}" data-c="${o.n}">
-      <div class="n" title="${esc(n)}">${esc(n)}</div>
+    <div class="row ${key ? "" : "nodrill"}${key === "merchant" ? " catpick" : ""}" data-n="${esc(n)}" data-l="${esc(label(n))}" data-v="${o.v}" data-c="${o.n}">
+      <div class="n" title="${esc(label(n))}">${esc(label(n))}</div>
       <div class="track"><div class="fill" style="width:${Math.max(0,o.v)/max*100}%"></div></div>
       <div class="amt">${fmt(o.v)}</div><div class="pct">${total ? Math.round(Math.max(0,o.v)/total*100) : 0}%</div>
-      ${key === "merchant" ? `<select data-mcat="${esc(n)}" title="Recategorize every transaction from this merchant">${catOptions(o.cat)}</select>` : ""}
+      ${key === "merchant" ? `<select data-mcat="${esc(n)}" title="${t("Recategorize every transaction from this merchant")}">${catOptions(o.cat)}</select>` : ""}
     </div>`).join("");
 }
 
@@ -446,12 +476,15 @@ function drawTable(txs){
     <td>${esc(t.account)}</td>
     <td><select data-id="${t.id}" title="${esc(catInfo(t.category))}">${catOptions(t.category)}</select></td>
     <td class="num ${t.amount > 0 ? "pos" : ""}">${t.amount > 0 ? "+" : ""}${fmt2(t.amount)}</td></tr>`).join("")
-    || `<tr><td colspan="6" class="empty">No transactions. Add a statement (CSV) or drop files on the page.</td></tr>`;
+    || `<tr><td colspan="6" class="empty">${t("No transactions. Add a statement (CSV) or drop files on the page.")}</td></tr>`;
   $("#more").hidden = rows.length <= S.limit;
   document.querySelectorAll("#tx th").forEach(th => th.textContent = th.textContent.replace(/ [▲▼]$/,"") + (th.dataset.k === S.sort ? (S.dir > 0 ? " ▲" : " ▼") : ""));
 }
 
 // ---------- interaction
+$("#langBtn").onclick = () => { LANG = LANG === "zh" ? "en" : "zh";
+  try { localStorage.setItem("lang", LANG); } catch {}
+  applyStatic(); load(); if (!$("#filesPanel").hidden) renderFiles(); };
 $("#kIncCard").onclick = () => { if (S.cat) return; S.cat = "Income"; S.merchant = null; S.limit = 200; render(); };
 $("#recurMore").onclick = () => { recurAll = !recurAll; drawRecurring(); };
 $("#recur tbody").addEventListener("click", e => { const r = e.target.closest("tr"); if (!r) return;
@@ -472,7 +505,7 @@ $("#trend svg").addEventListener("click", e => { const h = e.target.closest(".hi
   S.month = S.month === h.dataset.m ? null : h.dataset.m; S.limit = 200; render(); });
 $("#brk").addEventListener("pointermove", hover(e => { const r = e.target.closest(".row"); if (!r) return tip.style.display = "none";
   const info = !S.cat ? catInfo(r.dataset.n) : "";
-  showTip(e, `${esc(r.dataset.n)}<br><b>${fmt2(+r.dataset.v)}</b> · ${r.dataset.c} transactions`
+  showTip(e, `${esc(r.dataset.l)}<br><b>${fmt2(+r.dataset.v)}</b> · ${r.dataset.c} ${t("transactions")}`
     + (info ? `<div style="color:var(--text-secondary);margin-top:4px">${esc(info)}</div>` : "")); }));
 $("#brk").addEventListener("pointerleave", hideTip);
 $("#brk").addEventListener("click", e => { if (e.target.closest("select,input")) return;
@@ -483,7 +516,7 @@ $("#brk").addEventListener("change", e => {
   const sel = e.target.closest("select[data-mcat]"); if (!sel) return;
   const merchant = sel.dataset.mcat, cat = sel.value;
   if (cat === "__new"){
-    const inp = document.createElement("input"); inp.placeholder = "New category, Enter"; inp.size = 14;
+    const inp = document.createElement("input"); inp.placeholder = t("New category, Enter"); inp.size = 14;
     sel.replaceWith(inp); inp.focus();
     inp.onkeydown = ev => { if (ev.key === "Enter" && inp.value.trim()) saveMerchant(merchant, inp.value.trim()); if (ev.key === "Escape") render(); };
     inp.onblur = () => setTimeout(render, 150);
@@ -505,7 +538,7 @@ async function saveMerchant(merchant, category){
   if (!t) return;
   recategorize(t.id, category, "merchant");
   await persist();
-  toast(`All "${merchant}" → ${category} (saved as a rule)`);
+  toast(t("All “{merchant}” → {category} (saved as a rule)", {merchant, category: catLabel(category)}));
   load();
 }
 $("#crumbs").addEventListener("click", e => { const a = e.target.closest("a"); if (!a) return;
@@ -530,7 +563,7 @@ $("#tx").addEventListener("change", async e => {
   let cat = sel.value;
   if (cat === "__new"){
     // inline input instead of a prompt() dialog
-    const inp = document.createElement("input"); inp.placeholder = "New category, Enter"; inp.size = 16;
+    const inp = document.createElement("input"); inp.placeholder = t("New category, Enter"); inp.size = 16;
     sel.replaceWith(inp); inp.focus();
     inp.onkeydown = ev => { if (ev.key === "Enter" && inp.value.trim()) save(sel.dataset.id, inp.value.trim()); if (ev.key === "Escape") render(); };
     inp.onblur = () => setTimeout(render, 150);
@@ -540,10 +573,11 @@ $("#tx").addEventListener("change", async e => {
 });
 async function save(id, category){
   const scope = $("#scopeAll").checked ? "merchant" : "one";
-  const t = recategorize(id, category, scope);
-  if (!t) return;
+  const tx = recategorize(id, category, scope);
+  if (!tx) return;
   await persist();
-  toast(scope === "merchant" ? `All “${t.merchant}” → ${category} (saved as a rule)` : `Changed to ${category}`);
+  toast(scope === "merchant" ? t("All “{merchant}” → {category} (saved as a rule)", {merchant: tx.merchant, category: catLabel(category)})
+                             : t("Changed to {category}", {category: catLabel(category)}));
   load();
 }
 
@@ -554,16 +588,16 @@ $("#file").onchange = e => { const fs = [...e.target.files]; e.target.value = ""
 async function upload(list){
   const msgs = [], before = new Set(DATA.transactions.map(t => t.id)), added = [];
   for (const f of list){
-    if (!/\.csv$/i.test(f.name)){ msgs.push(`⚠ ${f.name}: only CSV files work. Download the statement as CSV instead.`); continue; }
+    if (!/\.csv$/i.test(f.name)){ msgs.push(t("⚠ {file}: only CSV files work. Download the statement as CSV instead.", {file: f.name})); continue; }
     const text = await f.text();
     let map = null;
     try { Engine.readCSV(text); }
     catch {  // layout not recognized: reuse a layout the user mapped before, or ask which column is which
-      const g = Engine.guessMap(text), saved = hasOwn(USER.formats, g.key) ? USER.formats[g.key] : null;
+      const g = Engine.guessMap(text), saved = own(USER.formats, g.key) ? USER.formats[g.key] : null;
       if (saved && readsOK(text, saved)) map = saved;
       else {
         const got = await askMap(f.name, text, g.map, false);
-        if (!got){ msgs.push(`Skipped ${f.name}`); continue; }
+        if (!got){ msgs.push(t("Skipped {file}", {file: f.name})); continue; }
         map = got.map; USER.formats[got.key] = map;
       }
     }
@@ -574,7 +608,7 @@ async function upload(list){
     await persist(); load();
     for (const name of added){
       const n = DATA.transactions.filter(t => t.source === name && !before.has(t.id)).length;
-      msgs.push(`${name}: ${DATA.perFile[name]} transactions, ${n} new`);
+      msgs.push(t("{file}: {count} transactions, {n} new", {file: name, count: DATA.perFile[name], n}));
     }
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();  // ask the browser not to evict our data
     if (!$("#filesPanel").hidden) renderFiles();
@@ -590,16 +624,16 @@ function askMap(name, text, start, editing){
   const ncol = Math.max(1, ...rows.slice(0, 50).map(r => r.length));
   const autoOK = editing && readsOK(text, undefined);
   $("#mapIntro").innerHTML = editing
-    ? `Pick which column holds what in <b>${esc(name)}</b>. Use this if dates, descriptions or amounts came out wrong.`
-    : `We couldn't recognize the layout of <b>${esc(name)}</b>. Tell us once which column holds what.`;
-  $("#mHeader").innerHTML = rows.slice(0, 10).map((r, i) => `<option value="${i}">Row ${i + 1}: ${esc(r.join(", ").slice(0, 60))}</option>`).join("")
-    + `<option value="-1">No row of column names: the file starts with data</option>`;
+    ? t("Pick which column holds what in <b>{file}</b>. Use this if dates, descriptions or amounts came out wrong.", {file: esc(name)})
+    : t("We couldn't recognize the layout of <b>{file}</b>. Tell us once which column holds what.", {file: esc(name)});
+  $("#mHeader").innerHTML = rows.slice(0, 10).map((r, i) => `<option value="${i}">${t("Row {n}", {n: i + 1})}: ${esc(r.join(", ").slice(0, 60))}</option>`).join("")
+    + `<option value="-1">${t("No row of column names: the file starts with data")}</option>`;
   const fillCols = () => {
     const h = +$("#mHeader").value, names = h >= 0 ? rows[h] : [], ex = rows[h + 1] || [];
-    const opts = [...Array(ncol).keys()].map(i => `<option value="${i}">${colName(i)}: ${esc((names[i] || "").trim() || "(no name)")}`
-      + `${(ex[i] || "").trim() ? " · e.g. " + esc(ex[i].trim().slice(0, 28)) : ""}</option>`).join("");
+    const opts = [...Array(ncol).keys()].map(i => `<option value="${i}">${colName(i)}: ${esc((names[i] || "").trim() || t("(no name)"))}`
+      + `${(ex[i] || "").trim() ? " · " + t("e.g.") + " " + esc(ex[i].trim().slice(0, 28)) : ""}</option>`).join("");
     for (const id of ["mDate", "mDesc", "mAmount", "mDebit", "mCredit"]){ const el = $("#" + id), v = el.value; el.innerHTML = opts; if (v !== "") el.value = v; }
-    const c = $("#mCat"), v = c.value; c.innerHTML = `<option value="-1">(none)</option>` + opts; c.value = v || "-1";
+    const c = $("#mCat"), v = c.value; c.innerHTML = `<option value="-1">${t("(none)")}</option>` + opts; c.value = v || "-1";
   };
   const set = m => {
     $("#mHeader").value = String(m.header); fillCols();
@@ -616,18 +650,18 @@ function askMap(name, text, start, editing){
     dlg.querySelectorAll("[data-two]").forEach(el => el.hidden = one);
     let txs = [], err = "";
     try { txs = Engine.readCSV(text, get()); } catch (e){ err = e.message; }
-    $("#mapCount").innerHTML = err ? `<span class="err">⚠ ${esc(err)}</span>` : `${txs.length.toLocaleString()} transactions found. The first few:`;
+    $("#mapCount").innerHTML = err ? `<span class="err">⚠ ${esc(t(err))}</span>` : t("{n} transactions found. The first few:", {n: txs.length.toLocaleString()});
     $("#mapPrev").innerHTML = txs.slice(0, 8).map(t => `<tr><td>${t.date}</td><td>${esc(t.description)}</td>`
       + `<td class="num ${t.amount > 0 ? "pos" : ""}">${t.amount > 0 ? "+" : ""}${fmt2(t.amount)}</td></tr>`).join("");
     $("#mapOk").disabled = !!err;
   };
   set(start); preview();
-  $("#mapOk").textContent = editing ? "Save" : "Import";
+  $("#mapOk").textContent = t(editing ? "Save" : "Import");
   let autoBtn = $("#mapAuto");
   if (autoBtn) autoBtn.remove();
   if (autoOK){ autoBtn = document.createElement("button"); autoBtn.id = "mapAuto"; autoBtn.type = "button";
-    autoBtn.textContent = "Use automatic detection"; $("#mapSkip").before(autoBtn); }
-  $("#mapSkip").textContent = editing ? "Cancel" : "Skip this file";
+    autoBtn.textContent = t("Use automatic detection"); $("#mapSkip").before(autoBtn); }
+  $("#mapSkip").textContent = t(editing ? "Cancel" : "Skip this file");
   return new Promise(resolve => {
     const done = v => { dlg.onchange = null; dlg.oncancel = null; dlg.close(); resolve(v); };
     dlg.onchange = e => { if (e.target.id === "mHeader") fillCols(); preview(); };
@@ -643,10 +677,10 @@ function renderFiles(){
   const names = FILES.map(f => f.name).sort();
   $("#filesList").innerHTML = names.length ? names.map(f => `
     <div class="row nodrill"><span class="n" title="${esc(f)}">${esc(f)}</span>
-    <span></span><span class="pct">${esc(String(DATA.perFile[f] ?? 0))} tx</span>
-    <span><button data-cols="${esc(f)}" title="Choose which column is the date, description and amount">Columns…</button>
-    <button data-rm="${esc(f)}" title="Remove this file and its transactions">✕</button></span></div>`).join("")
-    : `<div class="empty">No statement files yet.</div>`;
+    <span></span><span class="pct">${esc(t("{n} tx", {n: String(DATA.perFile[f] ?? 0)}))}</span>
+    <span><button data-cols="${esc(f)}" title="${t("Choose which column is the date, description and amount")}">${t("Columns…")}</button>
+    <button data-rm="${esc(f)}" title="${t("Remove this file and its transactions")}">✕</button></span></div>`).join("")
+    : `<div class="empty">${t("No statement files yet.")}</div>`;
 }
 $("#filesBtn").onclick = () => { const p = $("#filesPanel"); p.hidden = !p.hidden; if (!p.hidden) renderFiles(); };
 $("#filesList").onclick = async e => {
@@ -657,13 +691,13 @@ $("#filesList").onclick = async e => {
     if (!got) return;
     if (got === "auto") delete file.map;
     else { file.map = got.map; USER.formats[got.key] = got.map; }
-    await persist(); toast(`Re-read ${c}`); load(); renderFiles();
+    await persist(); toast(t("Re-read {file}", {file: c})); load(); renderFiles();
     return;
   }
   const f = e.target.dataset.rm;
-  if (!f || !confirm(`Remove "${f}" and its transactions?`)) return;
+  if (!f || !confirm(t("Remove \"{file}\" and its transactions?", {file: f}))) return;
   FILES = FILES.filter(x => x.name !== f);
-  await persist(); toast(`Removed ${f}`); load(); renderFiles();
+  await persist(); toast(t("Removed {file}", {file: f})); load(); renderFiles();
 };
 
 $("#backupBtn").onclick = () => {
@@ -676,19 +710,20 @@ $("#backupBtn").onclick = () => {
 document.querySelectorAll(".restoreBtn").forEach(b => b.onclick = () => $("#backupFile").click());
 $("#backupFile").onchange = async e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
-  let j; try { j = JSON.parse(await f.text()); } catch { return toast(`⚠ ${f.name} isn't a backup file.`); }
+  let j; try { j = JSON.parse(await f.text()); } catch { return toast(t("⚠ {file} isn't a backup file.", {file: f.name})); }
   const mo = strMap(j && j.merchant_overrides), to = strMap(j && j.transaction_overrides);
   if (j && Array.isArray(j.files)){  // full backup from this page
-    if (FILES.length && !confirm(`Replace everything here with the backup "${f.name}"?`)) return;
+    if (FILES.length && !confirm(t("Replace everything here with the backup \"{file}\"?", {file: f.name}))) return;
     FILES = j.files.filter(x => x && typeof x.name === "string" && typeof x.text === "string")
       .map(x => { const m = cleanMap(x.map); return {name: x.name, text: x.text, added: x.added, ...(m ? {map: m} : {})}; });
     USER = {merchant_overrides: mo, transaction_overrides: to, formats: cleanFormats(j.formats)};
-    toast(`Restored ${FILES.length} statement files.`);
+    toast(t("Restored {n} statement files.", {n: FILES.length}));
   } else if (j && (j.merchant_overrides || j.transaction_overrides)){  // rules.json from the command-line version
     Object.assign(USER.merchant_overrides, mo); Object.assign(USER.transaction_overrides, to);
     const m = Object.keys(mo).length, o = Object.keys(to).length;
-    toast(`Imported ${m} merchant choice${m === 1 ? "" : "s"} and ${o} one-off categor${o === 1 ? "y" : "ies"}.`);
-  } else return toast(`⚠ ${f.name} isn't a backup file.`);
+    toast(LANG === "en" ? `Imported ${m} merchant choice${m === 1 ? "" : "s"} and ${o} one-off categor${o === 1 ? "y" : "ies"}.`
+                        : t("Imported {m} merchant choices and {o} one-off categories.", {m, o}));
+  } else return toast(t("⚠ {file} isn't a backup file.", {file: f.name}));
   await persist(); load(); if (!$("#filesPanel").hidden) renderFiles();
 };
 
@@ -699,7 +734,7 @@ async function loadSamples(){
       return {name, text: await r.text(), added: Date.now()};
     }));
     await persist();
-  } catch { toast("Couldn't load the sample files."); }
+  } catch { toast(t("Couldn't load the sample files.")); }
 }
 let dragN = 0;
 addEventListener("dragenter", e => { e.preventDefault(); dragN++; $("#drop").style.display = "flex"; });
@@ -713,13 +748,13 @@ addEventListener("resize", () => render());
   $("#noStore").hidden = !!Store.db;
   $("#demoBar").hidden = PROFILE !== "demo";
   $("#sampleLink").hidden = PROFILE === "demo";
-  if (PROFILE === "demo") document.title = "Spending (sample data)";
+  applyStatic();
   try {
     FILES = (await Store.get("files")) || [];
     const u = await Store.get("user");
     if (u) USER = {merchant_overrides: strMap(u.merchant_overrides), transaction_overrides: strMap(u.transaction_overrides),
                    formats: cleanFormats(u.formats)};
-  } catch { toast("Couldn't read saved data from this browser."); }
+  } catch { toast(t("Couldn't read saved data from this browser.")); }
   if (PROFILE === "demo" && !FILES.length) await loadSamples();
   load();
 })();
